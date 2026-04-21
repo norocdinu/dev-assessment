@@ -1,0 +1,13 @@
+{
+  "name": "dev-assessment",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=apps/web\" \"npm run dev --workspace=apps/api\"",
+    "db:migrate": "npm run migrate --workspace=apps/api",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
