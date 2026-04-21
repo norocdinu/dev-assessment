@@ -4,7 +4,7 @@
 
 ---
 
-## Phase 1 — Foundation
+## Phase 1 — Foundation ✓ (2026-04-21)
 
 **Goal**: Admins can log in, manage a question bank, and configure tests. No candidate-facing features yet.
 
