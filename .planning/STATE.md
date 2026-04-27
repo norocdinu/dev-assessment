@@ -10,8 +10,8 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 ## Current Position
 
-- **Status**: Phase 2 planned — ready to execute
-- **Next action**: `/gsd-execute-phase 2`
+- **Status**: Phase 2 complete — ready for Phase 3
+- **Next action**: `/gsd-plan-phase 3`
 - **Milestone**: v1.0 (4 phases)
 - **Last Activity**: 2026-04-27
 
@@ -20,7 +20,7 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 | Phase | Status | Notes |
 |-------|--------|-------|
 | Phase 1 — Foundation | ✓ Complete (2026-04-21) | DB, admin auth, question bank CMS, test config |
-| Phase 2 — Test Experience | 📋 Planned (5 plans, 3 waves) | Candidate portal, timer, submission |
+| Phase 2 — Test Experience | ✓ Complete (2026-04-27) | Candidate portal, timer, submission, seeded links |
 | Phase 3 — Grading & Results | ⬜ Not started | Auto-grading, results views |
 | Phase 4 — Admin Dashboard | ⬜ Not started | Submissions list, comparison, export |
 

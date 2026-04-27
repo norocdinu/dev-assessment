@@ -27,7 +27,7 @@
 
 ---
 
-## Phase 2 — Test Experience
+## Phase 2 — Test Experience ✓ (2026-04-27)
 
 **Goal**: A candidate receives a link, takes a 30-minute timed MCQ test, and submits. Nothing breaks.
 
