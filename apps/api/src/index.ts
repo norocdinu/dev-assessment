@@ -7,6 +7,7 @@ import { authRoutes } from './routes/auth.js';
 import { questionRoutes } from './routes/questions.js';
 import { testConfigRoutes } from './routes/test-configs.js';
 import { technologyRoutes } from './routes/technologies.js';
+import { testLinkRoutes } from './routes/test-links.js';
 
 const app = Fastify({ logger: true });
 
@@ -26,5 +27,6 @@ await app.register(authRoutes, { prefix: '/auth' });
 await app.register(questionRoutes, { prefix: '/questions' });
 await app.register(testConfigRoutes, { prefix: '/test-configs' });
 await app.register(technologyRoutes, { prefix: '/technologies' });
+await app.register(testLinkRoutes, { prefix: '/admin/test-links' });
 
 app.listen({ port: Number(process.env.PORT ?? 3001), host: '0.0.0.0' });
