@@ -56,9 +56,8 @@ export default function TestConfigsPage() {
       cell: ({ row }) => (
         <div className="flex gap-2">
           <button
-            title="Coming in Phase 2"
-            disabled
-            className="text-gray-300 text-xs cursor-not-allowed"
+            onClick={() => router.push(`/test-configs/${row.original.id}/links`)}
+            className="text-blue-600 hover:underline text-xs"
           >
             Generate Link
           </button>
