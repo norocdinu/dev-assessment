@@ -46,3 +46,38 @@ export interface AdminUser {
   email: string;
   role: 'owner' | 'reviewer';
 }
+
+export interface TestLink {
+  id: string;
+  test_config_id: string;
+  token: string;
+  state: 'created' | 'active' | 'submitted' | 'expired';
+  expires_at: string | null;
+  started_at: string | null;
+  submitted_at: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+export interface CandidateQuestion {
+  id: string;
+  text: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  skill_area: string;
+}
+
+export interface CandidateSession {
+  started_at: string;
+  server_now: string;
+  questions: CandidateQuestion[];
+}
+
+export interface LocalSession {
+  token: string;
+  startedAt: string;
+  answers: Record<string, 'a' | 'b' | 'c' | 'd'>;
+  currentQuestionIndex: number;
+}

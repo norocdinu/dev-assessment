@@ -7,29 +7,52 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 async function migrate() {
   try {
-    // Check if already migrated
-    const existing = await db`
+    const [{ exists: phase1Exists }] = await db`
       SELECT EXISTS (
         SELECT 1 FROM information_schema.tables
         WHERE table_schema = 'public' AND table_name = 'admin_users'
       ) AS exists
     `;
 
-    if (existing[0].exists) {
-      console.log('Schema already exists — running seed data only');
-      const schema = readFileSync(join(__dirname, 'schema.sql'), 'utf8');
-      // Run only the INSERT (seed) portion
-      const insertOnly = schema.split('\n').filter(l => l.match(/^INSERT|^ON CONFLICT/)).join('\n');
-      if (insertOnly) {
-        const seedSql = schema.substring(schema.indexOf('-- Seed initial data'));
-        await db.unsafe(seedSql);
-        console.log('Seed data applied');
-      }
-    } else {
-      console.log('Running full migration...');
-      const schema = readFileSync(join(__dirname, 'schema.sql'), 'utf8');
+    const schema = readFileSync(join(__dirname, 'schema.sql'), 'utf8');
+
+    if (!phase1Exists) {
+      console.log('Running full migration (fresh DB)...');
       await db.unsafe(schema);
       console.log('Migration complete');
+      return;
+    }
+
+    console.log('Phase 1 schema present — checking Phase 2 tables...');
+
+    const [{ exists: phase2Exists }] = await db`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'test_links'
+      ) AS exists
+    `;
+
+    if (!phase2Exists) {
+      console.log('Running Phase 2 migration...');
+      const phase2Start = schema.indexOf('-- Phase 2: Test Links');
+      if (phase2Start !== -1) {
+        const seedStart = schema.indexOf('-- Seed initial data');
+        const phase2Sql = schema.substring(
+          phase2Start,
+          seedStart !== -1 ? seedStart : undefined
+        );
+        await db.unsafe(phase2Sql);
+        console.log('Phase 2 migration complete');
+      }
+    } else {
+      console.log('Phase 2 schema already present — skipping DDL');
+    }
+
+    // Always apply seed data
+    const seedStart = schema.indexOf('-- Seed initial data');
+    if (seedStart !== -1) {
+      await db.unsafe(schema.substring(seedStart));
+      console.log('Seed data applied');
     }
   } catch (err) {
     console.error('Migration failed:', err);
