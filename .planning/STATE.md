@@ -1,3 +1,17 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: — Shipped
+status: ready_to_execute
+last_updated: "2026-04-27T00:00:00.000Z"
+progress:
+  total_phases: 4
+  completed_phases: 2
+  total_plans: 12
+  completed_plans: 8
+  percent: 50
+---
+
 # Project State — Dev Assessment Platform
 
 ## Project Reference
@@ -6,23 +20,23 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 **Core value:** A candidate receives a link and gets a fair, repeatable, automatically-graded test — every time, for any technology, at any seniority level.
 
-**Current focus:** Phase 2 — Test Experience
+**Current focus:** Phase 3 — Grading & Results
 
 ## Current Position
 
-- **Status**: Phase 2 complete — ready for Phase 3
-- **Next action**: `/gsd-plan-phase 3`
+- **Status**: Phase 3 planned — ready to execute
+- **Next action**: `/gsd-execute-phase 3`
 - **Milestone**: v1.0 (4 phases)
 - **Last Activity**: 2026-04-27
 
 ## Progress
 
-| Phase | Status | Notes |
-|-------|--------|-------|
-| Phase 1 — Foundation | ✓ Complete (2026-04-21) | DB, admin auth, question bank CMS, test config |
-| Phase 2 — Test Experience | ✓ Complete (2026-04-27) | Candidate portal, timer, submission, seeded links |
-| Phase 3 — Grading & Results | ⬜ Not started | Auto-grading, results views |
-| Phase 4 — Admin Dashboard | ⬜ Not started | Submissions list, comparison, export |
+| Phase | Status | Plans | Notes |
+|-------|--------|-------|-------|
+| Phase 1 — Foundation | ✓ Complete (2026-04-21) | 3 | DB, admin auth, question bank CMS, test config |
+| Phase 2 — Test Experience | ✓ Complete (2026-04-27) | 5 | Candidate portal, timer, submission, seeded links |
+| Phase 3 — Grading & Results | ◆ Ready to execute | 4 | Auto-grading engine, results views (Wave 1→2→3) |
+| Phase 4 — Admin Dashboard | ⬜ Not started | — | Submissions list, comparison, export |
 
 ## Key Decisions
 
