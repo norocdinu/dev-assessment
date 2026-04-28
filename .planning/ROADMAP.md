@@ -52,7 +52,7 @@
 
 ---
 
-## Phase 3 — Grading & Results
+## Phase 3 — Grading & Results ✓ (2026-04-28)
 
 **Goal**: Submissions are auto-graded instantly. Candidates see their score and breakdown. Admins see the full answer sheet.
 
