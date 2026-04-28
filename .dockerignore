@@ -1,0 +1,12 @@
+node_modules
+apps/*/node_modules
+packages/*/node_modules
+apps/web/.next
+apps/api/dist
+packages/*/dist
+.env
+.env.local
+.planning
+.git
+coverage
+*.tsbuildinfo

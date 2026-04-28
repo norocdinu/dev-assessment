@@ -73,7 +73,7 @@
 
 ---
 
-## Phase 4 — Admin Dashboard & Export
+## Phase 4 — Admin Dashboard & Export ✓ (2026-04-28)
 
 **Goal**: Admins can monitor all submissions, compare candidates, see aggregate stats, and export data.
 
