@@ -9,6 +9,7 @@ import { testConfigRoutes } from './routes/test-configs.js';
 import { technologyRoutes } from './routes/technologies.js';
 import { testLinkRoutes } from './routes/test-links.js';
 import { candidateRoutes } from './routes/candidate.js';
+import { submissionRoutes } from './routes/submissions.js';
 
 const app = Fastify({ logger: true });
 
@@ -29,6 +30,7 @@ await app.register(questionRoutes, { prefix: '/questions' });
 await app.register(testConfigRoutes, { prefix: '/test-configs' });
 await app.register(technologyRoutes, { prefix: '/technologies' });
 await app.register(testLinkRoutes, { prefix: '/admin/test-links' });
+await app.register(submissionRoutes, { prefix: '/admin/submissions' });
 
 await app.register(async (candidateApp) => {
   const allowedOrigin = process.env.WEB_URL ?? 'http://localhost:3000';

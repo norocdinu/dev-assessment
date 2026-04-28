@@ -83,7 +83,8 @@ export async function candidateRoutes(app: FastifyInstance) {
 
     const [link] = await db`
       SELECT tl.id, tl.state, tl.seed, tl.started_at,
-             tc.technology_id, tc.difficulty, tc.num_questions
+             tc.technology_id, tc.difficulty, tc.num_questions,
+             tc.pass_threshold_pct
       FROM test_links tl
       JOIN test_configs tc ON tc.id = tl.test_config_id
       WHERE tl.token = ${token}
@@ -130,9 +131,11 @@ export async function candidateRoutes(app: FastifyInstance) {
       }
     }
 
-    // Transactional: upsert answers + atomic state transition
+    // Transactional: upsert answers + atomic state transition + grading
     let submittedAt: string | undefined;
     let alreadySubmitted = false;
+    let scorePct = 0;
+    let pass = false;
 
     await db.begin(async (sql) => {
       for (const [questionId, answer] of Object.entries(body.data.answers)) {
@@ -153,15 +156,126 @@ export async function candidateRoutes(app: FastifyInstance) {
 
       if (!updated) {
         alreadySubmitted = true;
-      } else {
-        submittedAt = updated.submitted_at;
+        return;
       }
+
+      submittedAt = updated.submitted_at;
+
+      // Fetch all answers with correct options for grading
+      const rows = await sql`
+        SELECT
+          ca.question_id,
+          ca.answer          AS candidate_answer,
+          q.correct_option,
+          q.skill_area
+        FROM candidate_answers ca
+        JOIN questions q ON q.id = ca.question_id
+        WHERE ca.link_id = ${link.id}
+      `;
+
+      const totalQuestions = rows.length;
+      const correctCount = rows.filter((r: { candidate_answer: string; correct_option: string }) => r.candidate_answer === r.correct_option).length;
+      scorePct = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+      pass = scorePct >= link.pass_threshold_pct;
+
+      // Compute skill area breakdown
+      const skillMap = new Map<string, { correct: number; total: number }>();
+      for (const r of rows as Array<{ candidate_answer: string; correct_option: string; skill_area: string }>) {
+        const entry = skillMap.get(r.skill_area) ?? { correct: 0, total: 0 };
+        entry.total += 1;
+        if (r.candidate_answer === r.correct_option) entry.correct += 1;
+        skillMap.set(r.skill_area, entry);
+      }
+      const skillAreaScores = Object.fromEntries(
+        [...skillMap.entries()].map(([skill_area, { correct, total }]) => [
+          skill_area,
+          { correct, total, pct: Math.round((correct / total) * 100) },
+        ])
+      );
+
+      const timeTakenSeconds = Math.round(
+        (new Date(submittedAt!).getTime() - new Date(link.started_at).getTime()) / 1000
+      );
+
+      await sql`
+        INSERT INTO submission_results (link_id, score_pct, pass, skill_area_scores, time_taken_seconds)
+        VALUES (${link.id}, ${scorePct}, ${pass}, ${sql.json(skillAreaScores)}, ${timeTakenSeconds})
+      `;
     });
 
     if (alreadySubmitted) {
       return reply.status(409).send({ error: 'Test already submitted' });
     }
 
-    return reply.status(200).send({ ok: true, submitted_at: submittedAt });
+    return reply.status(200).send({ ok: true, submitted_at: submittedAt, score_pct: scorePct, pass });
+  });
+
+  // GET /candidate/results/:token
+  app.get('/results/:token', async (request, reply) => {
+    const { token } = request.params as { token: string };
+
+    const [link] = await db`
+      SELECT id, state
+      FROM test_links
+      WHERE token = ${token}
+    `;
+
+    if (!link) return reply.status(404).send({ error: 'Link not found' });
+    if (link.state !== 'submitted') return reply.status(404).send({ error: 'Results not available' });
+
+    const [result] = await db`
+      SELECT
+        sr.score_pct,
+        sr.pass,
+        sr.skill_area_scores,
+        sr.time_taken_seconds,
+        sr.graded_at,
+        tl.submitted_at,
+        tl.test_config_id,
+        tc.pass_threshold_pct,
+        tc.name AS test_name,
+        t.name  AS technology_name,
+        tc.difficulty
+      FROM submission_results sr
+      JOIN test_links tl      ON tl.id = sr.link_id
+      JOIN test_configs tc    ON tc.id = tl.test_config_id
+      JOIN technologies t     ON t.id  = tc.technology_id
+      WHERE tl.token = ${token}
+    `;
+
+    if (!result) return reply.status(404).send({ error: 'Results not yet available' });
+
+    const answerSheet = await db`
+      SELECT
+        q.text             AS question_text,
+        q.option_a,
+        q.option_b,
+        q.option_c,
+        q.option_d,
+        q.correct_option,
+        q.skill_area,
+        ca.answer          AS candidate_answer,
+        (ca.answer = q.correct_option) AS is_correct
+      FROM candidate_answers ca
+      JOIN questions q ON q.id = ca.question_id
+      WHERE ca.link_id = ${link.id}
+      ORDER BY q.skill_area, q.id
+    `;
+
+    return reply.status(200).send({
+      link_id: link.id,
+      test_config_id: result.test_config_id,
+      score_pct: result.score_pct,
+      pass: result.pass,
+      pass_threshold_pct: result.pass_threshold_pct,
+      time_taken_seconds: result.time_taken_seconds,
+      submitted_at: result.submitted_at,
+      graded_at: result.graded_at,
+      test_name: result.test_name,
+      technology_name: result.technology_name,
+      difficulty: result.difficulty,
+      skill_area_scores: result.skill_area_scores,
+      answer_sheet: answerSheet,
+    });
   });
 }
