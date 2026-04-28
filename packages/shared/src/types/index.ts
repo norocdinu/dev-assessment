@@ -126,3 +126,31 @@ export interface SubmissionResult {
 export interface AdminSubmissionResult extends SubmissionResult {
   answer_sheet: AdminAnswerSheetRow[];
 }
+
+// Phase 4: Admin Dashboard
+
+export interface SubmissionListRow {
+  link_id: string;
+  test_config_id: string;
+  test_name: string;
+  technology_name: string;
+  difficulty: Difficulty;
+  score_pct: number;
+  pass: boolean;
+  pass_threshold_pct: number;
+  time_taken_seconds: number;
+  submitted_at: string;
+  graded_at: string;
+}
+
+export interface TestConfigStats {
+  total_submissions: number;
+  avg_score_pct: number;
+  pass_rate_pct: number;
+  bucket_0_49: number;
+  bucket_50_59: number;
+  bucket_60_69: number;
+  bucket_70_79: number;
+  bucket_80_89: number;
+  bucket_90_100: number;
+}

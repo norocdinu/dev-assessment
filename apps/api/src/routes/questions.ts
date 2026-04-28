@@ -162,4 +162,115 @@ export async function questionRoutes(app: FastifyInstance) {
 
     return { ok: true };
   });
+
+  // POST /questions/import — bulk CSV import (owner only)
+  app.post('/import', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
+    const data = await request.file();
+    if (!data) return reply.status(400).send({ error: 'No file uploaded' });
+
+    const buffer = await data.toBuffer();
+    const text = buffer.toString('utf-8').replace(/^﻿/, ''); // strip BOM
+
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) return reply.status(400).send({ error: 'CSV must have a header row and at least one data row' });
+
+    // Load all technologies for slug → id lookup
+    const technologies = await db`SELECT id, slug FROM technologies`;
+    const techMap = new Map<string, string>(
+      (technologies as unknown as Array<{ id: string; slug: string }>).map(t => [t.slug, t.id])
+    );
+
+    const rowSchema = z.object({
+      technology_id: z.string().uuid(),
+      difficulty: z.enum(['junior', 'mid', 'senior']),
+      skill_area: z.string().min(1),
+      text: z.string().min(1),
+      option_a: z.string().min(1),
+      option_b: z.string().min(1),
+      option_c: z.string().min(1),
+      option_d: z.string().min(1),
+      correct_option: z.enum(['a', 'b', 'c', 'd']),
+      explanation: z.string().optional(),
+    });
+
+    let imported = 0;
+    const errors: Array<{ row: number; reason: string }> = [];
+
+    // Skip header row (index 0), process data rows
+    for (let i = 1; i < lines.length; i++) {
+      const rowNum = i + 1; // 1-indexed, header is row 1
+      const cols = parseCsvLine(lines[i]);
+      // Expected: technology_slug,difficulty,skill_area,text,option_a,option_b,option_c,option_d,correct_option,explanation
+      if (cols.length < 9) {
+        errors.push({ row: rowNum, reason: `Expected at least 9 columns, got ${cols.length}` });
+        continue;
+      }
+
+      const [techSlug, difficulty, skill_area, text, option_a, option_b, option_c, option_d, correct_option, explanation] = cols;
+      const technology_id = techMap.get(techSlug);
+      if (!technology_id) {
+        errors.push({ row: rowNum, reason: `Unknown technology slug: '${techSlug}'` });
+        continue;
+      }
+
+      const validated = rowSchema.safeParse({
+        technology_id, difficulty, skill_area, text,
+        option_a, option_b, option_c, option_d,
+        correct_option: correct_option?.toLowerCase(),
+        explanation: explanation || undefined,
+      });
+
+      if (!validated.success) {
+        const firstError = validated.error.errors[0];
+        errors.push({ row: rowNum, reason: `${firstError.path.join('.')}: ${firstError.message}` });
+        continue;
+      }
+
+      try {
+        const familyId = uuidv4();
+        await db`
+          INSERT INTO questions (
+            family_id, version, technology_id, difficulty, skill_area,
+            text, option_a, option_b, option_c, option_d, correct_option,
+            explanation, created_by
+          ) VALUES (
+            ${familyId}, 1, ${validated.data.technology_id}, ${validated.data.difficulty},
+            ${validated.data.skill_area}, ${validated.data.text}, ${validated.data.option_a},
+            ${validated.data.option_b}, ${validated.data.option_c}, ${validated.data.option_d},
+            ${validated.data.correct_option}, ${validated.data.explanation ?? null}, ${request.user.id}
+          )
+        `;
+        imported++;
+      } catch {
+        errors.push({ row: rowNum, reason: 'Database insert failed' });
+      }
+    }
+
+    return reply.status(200).send({ imported, errors });
+  });
+}
+
+function parseCsvLine(line: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current.trim());
+  return result;
 }

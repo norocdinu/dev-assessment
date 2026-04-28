@@ -54,6 +54,12 @@ export default async function AdminLayout({
           >
             Test Configs
           </Link>
+          <Link
+            href="/submissions"
+            className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100"
+          >
+            Submissions
+          </Link>
         </nav>
         <div className="p-4 border-t border-gray-200 text-xs text-gray-500">
           <div className="font-medium text-gray-700">{user.email}</div>

@@ -32,6 +32,8 @@ export default function QuestionsPage() {
   const [historyModal, setHistoryModal] = useState<QuestionRow[] | null>(null);
   const [userRole, setUserRole] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [importResult, setImportResult] = useState<{ imported: number; errors: Array<{ row: number; reason: string }> } | null>(null);
+  const [importing, setImporting] = useState(false);
 
   const debouncedSearch = useDebounce(search, 300);
   const debouncedSkillArea = useDebounce(skillArea, 300);
@@ -68,6 +70,27 @@ export default function QuestionsPage() {
   async function handleHistory(familyId: string) {
     const res = await api.get(`/questions/${familyId}/versions`);
     setHistoryModal(res.data);
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await api.post('/questions/import', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setImportResult(res.data);
+      if (res.data.imported > 0) fetchQuestions();
+    } catch {
+      setImportResult({ imported: 0, errors: [{ row: 0, reason: 'Upload failed. Check file format.' }] });
+    } finally {
+      setImporting(false);
+    }
   }
 
   const isOwner = userRole === 'owner';
@@ -129,12 +152,18 @@ export default function QuestionsPage() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900">Question Bank</h2>
         {isOwner && (
-          <button
-            onClick={() => router.push('/questions/new')}
-            className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
-          >
-            New Question
-          </button>
+          <div className="flex gap-2">
+            <label className={`px-4 py-2 text-sm rounded-md border cursor-pointer ${importing ? 'text-gray-400 border-gray-200' : 'text-gray-700 border-gray-300 hover:bg-gray-50'}`}>
+              {importing ? 'Importing…' : 'Import CSV'}
+              <input type="file" accept=".csv" className="hidden" disabled={importing} onChange={handleImport} />
+            </label>
+            <button
+              onClick={() => router.push('/questions/new')}
+              className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+            >
+              New Question
+            </button>
+          </div>
         )}
       </div>
 
@@ -179,6 +208,35 @@ export default function QuestionsPage() {
           Show archived
         </label>
       </div>
+
+      {/* Import result */}
+      {importResult && (
+        <div className="mb-4 p-4 bg-white border border-gray-200 rounded-lg">
+          <div className="text-sm font-medium text-gray-900 mb-2">
+            Import complete: {importResult.imported} question{importResult.imported !== 1 ? 's' : ''} imported
+            {importResult.errors.length > 0 && `, ${importResult.errors.length} error${importResult.errors.length !== 1 ? 's' : ''}`}
+          </div>
+          {importResult.errors.length > 0 && (
+            <table className="w-full text-xs border border-gray-200 rounded">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-3 py-2 text-left text-gray-600">Row</th>
+                  <th className="px-3 py-2 text-left text-gray-600">Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {importResult.errors.map((e, i) => (
+                  <tr key={i} className="border-t border-gray-100">
+                    <td className="px-3 py-2 text-gray-700">{e.row || '—'}</td>
+                    <td className="px-3 py-2 text-red-600">{e.reason}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <button onClick={() => setImportResult(null)} className="mt-2 text-xs text-gray-400 hover:underline">Dismiss</button>
+        </div>
+      )}
 
       <p className="text-sm text-gray-500 mb-2">
         {loading ? 'Loading...' : `Showing ${questions.length} question${questions.length !== 1 ? 's' : ''}`}
