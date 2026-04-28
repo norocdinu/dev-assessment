@@ -81,3 +81,48 @@ export interface LocalSession {
   answers: Record<string, 'a' | 'b' | 'c' | 'd'>;
   currentQuestionIndex: number;
 }
+
+// Phase 3: Grading & Results
+
+export interface SkillAreaScore {
+  correct: number;
+  total: number;
+  pct: number;
+}
+
+export interface AnswerSheetRow {
+  question_text: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  correct_option: 'a' | 'b' | 'c' | 'd';
+  candidate_answer: 'a' | 'b' | 'c' | 'd' | null;
+  is_correct: boolean;
+  skill_area: string;
+}
+
+export interface AdminAnswerSheetRow extends AnswerSheetRow {
+  family_id: string;
+  version: number;
+}
+
+export interface SubmissionResult {
+  link_id: string;
+  test_config_id: string;
+  score_pct: number;
+  pass: boolean;
+  pass_threshold_pct: number;
+  time_taken_seconds: number;
+  submitted_at: string;
+  graded_at: string;
+  test_name: string;
+  technology_name: string;
+  difficulty: Difficulty;
+  skill_area_scores: Record<string, SkillAreaScore>;
+  answer_sheet: AnswerSheetRow[];
+}
+
+export interface AdminSubmissionResult extends SubmissionResult {
+  answer_sheet: AdminAnswerSheetRow[];
+}

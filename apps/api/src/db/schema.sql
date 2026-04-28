@@ -101,6 +101,19 @@ CREATE TABLE IF NOT EXISTS candidate_answers (
 );
 CREATE INDEX IF NOT EXISTS idx_candidate_answers_link ON candidate_answers (link_id);
 
+-- Phase 3: Submission Results
+CREATE TABLE IF NOT EXISTS submission_results (
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  link_id             UUID NOT NULL REFERENCES test_links(id),
+  score_pct           INT  NOT NULL CHECK (score_pct BETWEEN 0 AND 100),
+  pass                BOOLEAN NOT NULL,
+  skill_area_scores   JSONB NOT NULL DEFAULT '{}',
+  time_taken_seconds  INT NOT NULL CHECK (time_taken_seconds >= 0),
+  graded_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (link_id)
+);
+CREATE INDEX IF NOT EXISTS idx_submission_results_link ON submission_results (link_id);
+
 -- Seed initial data
 INSERT INTO technologies (slug, name) VALUES
   ('power-bi',         'Power BI'),

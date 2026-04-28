@@ -48,6 +48,29 @@ async function migrate() {
       console.log('Phase 2 schema already present — skipping DDL');
     }
 
+    const [{ exists: phase3Exists }] = await db`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'submission_results'
+      ) AS exists
+    `;
+
+    if (!phase3Exists) {
+      console.log('Running Phase 3 migration...');
+      const phase3Start = schema.indexOf('-- Phase 3: Submission Results');
+      if (phase3Start !== -1) {
+        const seedStart = schema.indexOf('-- Seed initial data');
+        const phase3Sql = schema.substring(
+          phase3Start,
+          seedStart !== -1 ? seedStart : undefined
+        );
+        await db.unsafe(phase3Sql);
+        console.log('Phase 3 migration complete');
+      }
+    } else {
+      console.log('Phase 3 schema already present — skipping DDL');
+    }
+
     // Always apply seed data
     const seedStart = schema.indexOf('-- Seed initial data');
     if (seedStart !== -1) {
