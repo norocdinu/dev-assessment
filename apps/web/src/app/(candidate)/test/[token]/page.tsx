@@ -60,13 +60,13 @@ export default function TestPage() {
       });
 
       if (res.ok) {
-        router.push(`/test/${token}/expired?state=submitted`);
+        router.push(`/test/${token}/results`);
         return;
       }
 
       if (res.status === 409) {
         // D-09: already submitted — treat as success
-        router.push(`/test/${token}/expired?state=submitted`);
+        router.push(`/test/${token}/results`);
         return;
       }
 
@@ -118,7 +118,7 @@ export default function TestPage() {
           return;
         }
         if (res.status === 409) {
-          router.push(`/test/${token}/expired?state=submitted`);
+          router.push(`/test/${token}/results`);
           return;
         }
         if (!res.ok) {

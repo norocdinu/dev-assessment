@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/DataTable';
 import { api } from '@/lib/api';
@@ -9,6 +9,7 @@ import type { TestLink } from '@dev-assessment/shared';
 
 export default function LinksPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const [links, setLinks] = useState<TestLink[]>([]);
   const [userRole, setUserRole] = useState('');
   const [loading, setLoading] = useState(true);
@@ -109,22 +110,29 @@ export default function LinksPage() {
         return v ? new Date(v).toLocaleDateString() : '—';
       },
     },
-    ...(isOwner
-      ? [
-          {
-            header: 'Actions',
-            cell: ({ row }: { row: { original: TestLink } }) =>
-              row.original.state !== 'submitted' && row.original.state !== 'expired' ? (
-                <button
-                  onClick={() => handleRevoke(row.original.id)}
-                  className="text-red-600 hover:underline text-xs"
-                >
-                  Revoke
-                </button>
-              ) : null,
-          } as ColumnDef<TestLink>,
-        ]
-      : []),
+    {
+      header: 'Actions',
+      cell: ({ row }: { row: { original: TestLink } }) => (
+        <div className="flex gap-2">
+          {row.original.state === 'submitted' && (
+            <button
+              onClick={() => router.push(`/admin/submissions/${row.original.id}`)}
+              className="text-blue-600 hover:underline text-xs"
+            >
+              View result
+            </button>
+          )}
+          {isOwner && row.original.state !== 'submitted' && row.original.state !== 'expired' && (
+            <button
+              onClick={() => handleRevoke(row.original.id)}
+              className="text-red-600 hover:underline text-xs"
+            >
+              Revoke
+            </button>
+          )}
+        </div>
+      ),
+    } as ColumnDef<TestLink>,
   ];
 
   return (
