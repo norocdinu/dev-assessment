@@ -6,12 +6,12 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy workspace manifests first for layer-cache efficiency
-COPY package.json ./
+COPY package.json package-lock.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/api/package.json ./apps/api/
 
 # Full install (devDeps needed for tsc; native deps compiled for this Alpine)
-RUN npm install
+RUN npm ci
 
 # Copy source and compile
 COPY tsconfig.base.json ./
