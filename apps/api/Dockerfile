@@ -38,8 +38,7 @@ COPY --from=builder /app/node_modules ./node_modules
 # Strip devDependencies in-place
 RUN npm prune --omit=dev
 
-# Copy compiled output
-COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+# Copy compiled output (shared is types-only, erased at compile time — no dist needed)
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 
 # schema.sql is read at runtime via __dirname (resolves to dist/db/)
