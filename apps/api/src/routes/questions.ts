@@ -277,6 +277,38 @@ export async function questionRoutes(app: FastifyInstance) {
     return newVersion;
   });
 
+  // DELETE /questions/:familyId/hard — permanent delete, blocked if referenced in candidate_answers (owner only)
+  app.delete('/:familyId/hard', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
+    const { familyId } = request.params as { familyId: string };
+
+    const [refCheck] = await db`
+      SELECT COUNT(*) AS count
+      FROM candidate_answers ca
+      JOIN questions q ON q.id = ca.question_id
+      WHERE q.family_id = ${familyId}
+    `;
+    const refCount = Number(refCheck.count);
+
+    if (refCount > 0) {
+      return reply.status(409).send({
+        error: 'used_in_submissions',
+        count: refCount,
+        message: `This question was used in ${refCount} past submission${refCount !== 1 ? 's' : ''} and cannot be deleted. Archive it to hide it from future tests.`,
+      });
+    }
+
+    await db`DELETE FROM questions WHERE family_id = ${familyId}`;
+
+    await logAudit({
+      adminId: getAuthUser(request).id,
+      action: 'question.delete',
+      entityType: 'question',
+      entityId: familyId,
+    });
+
+    return reply.status(200).send({ ok: true });
+  });
+
   // DELETE /questions/:familyId (soft-delete)
   app.delete('/:familyId', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
     const { familyId } = request.params as { familyId: string };
