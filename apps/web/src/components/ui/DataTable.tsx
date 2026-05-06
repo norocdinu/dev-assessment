@@ -23,7 +23,7 @@ interface DataTableProps<T> {
 export function DataTable<T>({ columns, data, pagination }: DataTableProps<T>) {
   const table = useReactTable({ data, columns, getCoreRowModel: getCoreRowModel() });
 
-  const showingStart = pagination ? (pagination.page - 1) * pagination.pageSize + 1 : 1;
+  const showingStart = pagination ? (pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.pageSize + 1) : 1;
   const showingEnd = pagination ? Math.min(pagination.page * pagination.pageSize, pagination.total) : data.length;
 
   return (
