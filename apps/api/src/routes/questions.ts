@@ -189,6 +189,9 @@ export async function questionRoutes(app: FastifyInstance) {
   // GET /questions/:familyId/versions
   app.get('/:familyId/versions', { preHandler: authMiddleware }, async (request, reply) => {
     const { familyId } = request.params as { familyId: string };
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(familyId)) {
+      return reply.status(400).send({ error: 'Invalid familyId format' });
+    }
     const rows = await db`
       SELECT q.*, t.name AS technology_name
       FROM questions q
