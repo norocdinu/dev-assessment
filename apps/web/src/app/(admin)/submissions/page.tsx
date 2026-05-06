@@ -65,14 +65,18 @@ export default function SubmissionsPage() {
     fetchSubmissions(1);
   }, []);
 
-  async function fetchSubmissions(currentPage = page) {
+  async function fetchSubmissions(currentPage = page, opts?: { testConfigId?: string; dateFrom?: string; dateTo?: string; difficulty?: string }) {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filterTestConfigId) params.set('testConfigId', filterTestConfigId);
-      if (filterDateFrom) params.set('dateFrom', filterDateFrom);
-      if (filterDateTo) params.set('dateTo', filterDateTo);
-      if (filterDifficulty) params.set('difficulty', filterDifficulty);
+      const tcId = opts !== undefined ? opts.testConfigId ?? '' : filterTestConfigId;
+      const from = opts !== undefined ? opts.dateFrom ?? '' : filterDateFrom;
+      const to = opts !== undefined ? opts.dateTo ?? '' : filterDateTo;
+      const diff = opts !== undefined ? opts.difficulty ?? '' : filterDifficulty;
+      if (tcId) params.set('testConfigId', tcId);
+      if (from) params.set('dateFrom', from);
+      if (to) params.set('dateTo', to);
+      if (diff) params.set('difficulty', diff);
       params.set('page', String(currentPage));
       params.set('pageSize', String(PAGE_SIZE));
       const res = await api.get(`/admin/submissions?${params}`);
@@ -105,7 +109,7 @@ export default function SubmissionsPage() {
     setFilterDifficulty('');
     setSelectedIds(new Set());
     setPage(1);
-    setTimeout(() => fetchSubmissions(1), 0);
+    fetchSubmissions(1, { testConfigId: '', dateFrom: '', dateTo: '', difficulty: '' });
   }
 
   function handlePageChange(newPage: number) {
