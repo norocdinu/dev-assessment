@@ -1,42 +1,31 @@
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { api } from '@/lib/api';
 import type { AdminUser } from '@dev-assessment/shared';
 
-async function getMe(token: string): Promise<AdminUser | null> {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/auth/me`, {
-      headers: { Cookie: `token=${token}` },
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.user;
-  } catch {
-    return null;
-  }
-}
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const [user, setUser] = useState<AdminUser | null>(null);
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  useEffect(() => {
+    api.get('/auth/me')
+      .then((r) => setUser(r.data.user))
+      .catch(() => router.push('/login'));
+  }, [router]);
 
-  if (!token) {
-    redirect('/login');
-  }
-
-  const user = await getMe(token);
   if (!user) {
-    redirect('/login');
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="w-6 h-6 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+      </div>
+    );
   }
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
       <aside className="w-56 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-4 border-b border-gray-200">
           <h1 className="text-sm font-semibold text-gray-900">Dev Assessment</h1>
@@ -66,8 +55,6 @@ export default async function AdminLayout({
           <div className="capitalize">{user.role}</div>
         </div>
       </aside>
-
-      {/* Main content */}
       <main className="flex-1 overflow-auto">{children}</main>
     </div>
   );
