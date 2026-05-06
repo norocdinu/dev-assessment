@@ -389,6 +389,31 @@ export default function SubmissionsPage() {
         </div>
       )}
 
+      {/* Pagination */}
+      {!loading && total > 0 && (
+        <div className="flex items-center justify-between px-4 py-3 mt-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600">
+          <span>
+            Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page <= 1}
+              className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+            >
+              Prev
+            </button>
+            <button
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page * PAGE_SIZE >= total}
+              className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Comparison sticky footer */}
       {selectedIds.size >= 2 && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 flex items-center justify-between shadow-lg">
