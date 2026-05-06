@@ -77,14 +77,22 @@ export default function QuestionsPage() {
 
   async function handleArchive(familyId: string) {
     if (!confirm('Archive this question?')) return;
-    await api.delete(`/questions/${familyId}`);
-    toast.success('Question archived');
-    fetchQuestions();
+    try {
+      await api.delete(`/questions/${familyId}`);
+      toast.success('Question archived');
+      fetchQuestions();
+    } catch {
+      toast.error('Failed to archive question');
+    }
   }
 
   async function handleHistory(familyId: string) {
-    const res = await api.get(`/questions/${familyId}/versions`);
-    setHistoryModal(res.data);
+    try {
+      const res = await api.get(`/questions/${familyId}/versions`);
+      setHistoryModal(res.data);
+    } catch {
+      toast.error('Failed to load version history');
+    }
   }
 
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
