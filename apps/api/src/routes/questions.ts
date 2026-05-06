@@ -27,6 +27,8 @@ const listQuerySchema = z.object({
   skill_area: z.string().optional(),
   search: z.string().optional(),
   include_archived: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25),
 });
 
 export async function questionRoutes(app: FastifyInstance) {
@@ -35,8 +37,21 @@ export async function questionRoutes(app: FastifyInstance) {
     const query = listQuerySchema.safeParse(request.query);
     if (!query.success) return reply.status(400).send({ error: 'Invalid query params' });
 
-    const { technology, difficulty, skill_area, search, include_archived } = query.data;
+    const { technology, difficulty, skill_area, search, include_archived, page, pageSize } = query.data;
     const showArchived = include_archived === 'true';
+    const offset = (page - 1) * pageSize;
+
+    const [countRow] = await db`
+      SELECT COUNT(*) AS count
+      FROM questions q
+      JOIN technologies t ON t.id = q.technology_id
+      WHERE q.is_latest = TRUE
+        ${showArchived ? db`` : db`AND q.is_active = TRUE`}
+        ${technology ? db`AND t.slug = ${technology}` : db``}
+        ${difficulty ? db`AND q.difficulty = ${difficulty}` : db``}
+        ${skill_area ? db`AND q.skill_area ILIKE ${'%' + skill_area + '%'}` : db``}
+        ${search ? db`AND q.text ILIKE ${'%' + search + '%'}` : db``}
+    `;
 
     const rows = await db`
       SELECT q.*, t.name AS technology_name
@@ -49,9 +64,10 @@ export async function questionRoutes(app: FastifyInstance) {
         ${skill_area ? db`AND q.skill_area ILIKE ${'%' + skill_area + '%'}` : db``}
         ${search ? db`AND q.text ILIKE ${'%' + search + '%'}` : db``}
       ORDER BY q.created_at DESC
+      LIMIT ${pageSize} OFFSET ${offset}
     `;
 
-    return rows;
+    return reply.status(200).send({ data: rows, total: Number(countRow.count), page, pageSize });
   });
 
   // GET /questions/:familyId/versions
