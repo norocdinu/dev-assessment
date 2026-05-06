@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 ## Current Position
 
-- **Status**: v1.0 complete — all phases done
-- **Next action**: Deploy and run the platform
+- **Status**: Phase 5 context gathered — ready to plan improvements
+- **Next action**: `/gsd-plan-phase 5` to create the implementation plan
 - **Milestone**: v1.0 (4 phases) ✓ Shipped 2026-04-28
-- **Last Activity**: 2026-04-28
+- **Last Activity**: 2026-05-07
 
 ## Progress
 
@@ -37,6 +37,12 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 | Phase 2 — Test Experience | ✓ Complete (2026-04-27) | 5 | Candidate portal, timer, submission, seeded links |
 | Phase 3 — Grading & Results | ✓ Complete (2026-04-28) | 4 | Auto-grading engine, results views (Wave 1→2→3) |
 | Phase 4 — Admin Dashboard | ✓ Complete (2026-04-28) | 6 | Submissions list, comparison, stats, CSV export, bulk import |
+
+## Accumulated Context
+
+### Roadmap Evolution
+- Phase 5 added: improvements to the existing app
+- Phase 5 context gathered 2026-05-07: question bank (filters, export, bulk archive, delete) + admin UX (sidebar active state, toasts, pagination)
 
 ## Key Decisions
 
