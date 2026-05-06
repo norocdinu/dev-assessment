@@ -155,22 +155,20 @@ export async function questionRoutes(app: FastifyInstance) {
 
     const { ids } = body.data;
     let deleted = 0;
-    const blocked: Array<{ id: string; count: number }> = [];
 
-    for (const familyId of ids) {
-      const [refCheck] = await db`
-        SELECT COUNT(*) AS count
-        FROM candidate_answers ca
-        JOIN questions q ON q.id = ca.question_id
-        WHERE q.family_id = ${familyId}
-      `;
-      const refCount = Number(refCheck.count);
-      if (refCount > 0) {
-        blocked.push({ id: familyId, count: refCount });
-      } else {
-        await db`DELETE FROM questions WHERE family_id = ${familyId}`;
-        deleted++;
-      }
+    const referenced = await db`
+      SELECT DISTINCT q.family_id
+      FROM candidate_answers ca
+      JOIN questions q ON q.id = ca.question_id
+      WHERE q.family_id = ANY(${ids}::uuid[])
+    `;
+    const referencedSet = new Set(referenced.map((r: { family_id: string }) => r.family_id));
+    const deletable = ids.filter(id => !referencedSet.has(id));
+    const blocked = ids.filter(id => referencedSet.has(id)).map(id => ({ id, count: -1 }));
+
+    if (deletable.length > 0) {
+      await db`DELETE FROM questions WHERE family_id = ANY(${deletable}::uuid[])`;
+      deleted = deletable.length;
     }
 
     if (deleted > 0) {
