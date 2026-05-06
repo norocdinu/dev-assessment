@@ -126,7 +126,7 @@ export async function questionRoutes(app: FastifyInstance) {
 
   // PATCH /questions/bulk-archive — set is_active = false for all is_latest rows in given family IDs (owner only)
   app.patch('/bulk-archive', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
-    const body = z.object({ ids: z.array(z.string().uuid()).min(1) }).safeParse(request.body);
+    const body = z.object({ ids: z.array(z.string().uuid()).min(1).max(200) }).safeParse(request.body);
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() });
 
     const { ids } = body.data;
@@ -150,7 +150,7 @@ export async function questionRoutes(app: FastifyInstance) {
 
   // POST /questions/bulk-delete — hard delete families with no submission refs, return blocked list (owner only)
   app.post('/bulk-delete', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
-    const body = z.object({ ids: z.array(z.string().uuid()).min(1) }).safeParse(request.body);
+    const body = z.object({ ids: z.array(z.string().uuid()).min(1).max(200) }).safeParse(request.body);
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() });
 
     const { ids } = body.data;
