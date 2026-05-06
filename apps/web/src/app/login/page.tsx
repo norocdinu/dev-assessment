@@ -16,7 +16,8 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/login', { email, password });
+      localStorage.setItem('auth_token', res.data.token);
       router.push('/questions');
     } catch {
       setError('Invalid email or password');

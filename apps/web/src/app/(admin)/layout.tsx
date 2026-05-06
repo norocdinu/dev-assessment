@@ -53,6 +53,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="p-4 border-t border-gray-200 text-xs text-gray-500">
           <div className="font-medium text-gray-700">{user.email}</div>
           <div className="capitalize">{user.role}</div>
+          <button
+            onClick={() => {
+              localStorage.removeItem('auth_token');
+              window.location.href = '/login';
+            }}
+            className="mt-2 text-gray-400 hover:text-gray-600 underline"
+          >
+            Sign out
+          </button>
         </div>
       </aside>
       <main className="flex-1 overflow-auto">{children}</main>

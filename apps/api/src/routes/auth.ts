@@ -35,14 +35,7 @@ export async function authRoutes(app: FastifyInstance) {
       { expiresIn: process.env.JWT_EXPIRES_IN ?? '8h' }
     );
 
-    reply.setCookie('token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      path: '/',
-      secure: process.env.NODE_ENV === 'production',
-    });
-
-    return { user: { id: user.id, email: user.email, role: user.role } };
+    return { token, user: { id: user.id, email: user.email, role: user.role } };
   });
 
   app.post('/logout', { preHandler: authMiddleware }, async (request, reply) => {
