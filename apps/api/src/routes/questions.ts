@@ -108,7 +108,10 @@ export async function questionRoutes(app: FastifyInstance) {
     `;
     if (!current) return reply.status(404).send({ error: 'Question not found' });
 
-    const merged = { ...current, ...body.data };
+    const merged: Record<string, any> = {
+      ...current,
+      ...Object.fromEntries(Object.entries(body.data).filter(([, v]) => v !== undefined)),
+    };
 
     const [newVersion] = await db.begin(async (sql) => {
       await sql`
