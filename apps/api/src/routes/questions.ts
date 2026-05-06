@@ -275,7 +275,7 @@ export async function questionRoutes(app: FastifyInstance) {
       detail: { from_version: current.version, to_version: newVersion.version },
     });
 
-    return newVersion;
+    return reply.status(200).send(newVersion);
   });
 
   // DELETE /questions/:familyId/hard — permanent delete, blocked if referenced in candidate_answers (owner only)
