@@ -55,13 +55,17 @@ export default function SubmissionsPage() {
 
   const [sorting, setSorting] = useState<SortingState>([{ id: 'submitted_at', desc: true }]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const PAGE_SIZE = 25;
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     api.get('/test-configs').then((r) => setTestConfigs(r.data)).catch(() => {});
-    fetchSubmissions();
+    fetchSubmissions(1);
   }, []);
 
-  async function fetchSubmissions() {
+  async function fetchSubmissions(currentPage = page) {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -69,8 +73,11 @@ export default function SubmissionsPage() {
       if (filterDateFrom) params.set('dateFrom', filterDateFrom);
       if (filterDateTo) params.set('dateTo', filterDateTo);
       if (filterDifficulty) params.set('difficulty', filterDifficulty);
+      params.set('page', String(currentPage));
+      params.set('pageSize', String(PAGE_SIZE));
       const res = await api.get(`/admin/submissions?${params}`);
-      setSubmissions(res.data);
+      setSubmissions(res.data.data);
+      setTotal(res.data.total);
     } finally {
       setLoading(false);
     }
@@ -86,7 +93,8 @@ export default function SubmissionsPage() {
   }, [filterTestConfigId]);
 
   function applyFilters() {
-    fetchSubmissions();
+    setPage(1);
+    fetchSubmissions(1);
     setSelectedIds(new Set());
   }
 
@@ -96,7 +104,13 @@ export default function SubmissionsPage() {
     setFilterDateTo('');
     setFilterDifficulty('');
     setSelectedIds(new Set());
-    setTimeout(() => fetchSubmissions(), 0);
+    setPage(1);
+    setTimeout(() => fetchSubmissions(1), 0);
+  }
+
+  function handlePageChange(newPage: number) {
+    setPage(newPage);
+    fetchSubmissions(newPage);
   }
 
   async function handleExport() {
