@@ -55,13 +55,17 @@ export default function SubmissionsPage() {
 
   const [sorting, setSorting] = useState<SortingState>([{ id: 'submitted_at', desc: true }]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const PAGE_SIZE = 25;
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     api.get('/test-configs').then((r) => setTestConfigs(r.data)).catch(() => {});
-    fetchSubmissions();
+    fetchSubmissions(1);
   }, []);
 
-  async function fetchSubmissions() {
+  async function fetchSubmissions(currentPage = page) {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -69,8 +73,11 @@ export default function SubmissionsPage() {
       if (filterDateFrom) params.set('dateFrom', filterDateFrom);
       if (filterDateTo) params.set('dateTo', filterDateTo);
       if (filterDifficulty) params.set('difficulty', filterDifficulty);
+      params.set('page', String(currentPage));
+      params.set('pageSize', String(PAGE_SIZE));
       const res = await api.get(`/admin/submissions?${params}`);
-      setSubmissions(res.data);
+      setSubmissions(res.data.data);
+      setTotal(res.data.total);
     } finally {
       setLoading(false);
     }
@@ -86,7 +93,8 @@ export default function SubmissionsPage() {
   }, [filterTestConfigId]);
 
   function applyFilters() {
-    fetchSubmissions();
+    setPage(1);
+    fetchSubmissions(1);
     setSelectedIds(new Set());
   }
 
@@ -96,7 +104,13 @@ export default function SubmissionsPage() {
     setFilterDateTo('');
     setFilterDifficulty('');
     setSelectedIds(new Set());
-    setTimeout(() => fetchSubmissions(), 0);
+    setPage(1);
+    setTimeout(() => fetchSubmissions(1), 0);
+  }
+
+  function handlePageChange(newPage: number) {
+    setPage(newPage);
+    fetchSubmissions(newPage);
   }
 
   async function handleExport() {
@@ -371,6 +385,31 @@ export default function SubmissionsPage() {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!loading && total > 0 && (
+        <div className="flex items-center justify-between px-4 py-3 mt-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600">
+          <span>
+            Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page <= 1}
+              className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+            >
+              Prev
+            </button>
+            <button
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page * PAGE_SIZE >= total}
+              className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+            >
+              Next
+            </button>
           </div>
         </div>
       )}
