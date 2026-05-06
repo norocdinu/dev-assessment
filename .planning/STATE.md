@@ -24,8 +24,8 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 ## Current Position
 
-- **Status**: Phase 5 context gathered — ready to plan improvements
-- **Next action**: `/gsd-plan-phase 5` to create the implementation plan
+- **Status**: Phase 5 planned — ready to execute (4 plans, 3 waves)
+- **Next action**: `/gsd-execute-phase 5` to implement all plans
 - **Milestone**: v1.0 (4 phases) ✓ Shipped 2026-04-28
 - **Last Activity**: 2026-05-07
 

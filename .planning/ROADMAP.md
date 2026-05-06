@@ -1,6 +1,6 @@
 # Roadmap — Dev Assessment Platform
 
-**4 phases** | **24 requirements mapped** | All v1 requirements covered ✓
+**5 phases** | **24 requirements mapped** | All v1 requirements covered ✓
 
 ---
 
@@ -93,6 +93,20 @@
 4. Dashboard shows average score and pass rate across all submissions for a test
 5. Admin exports results to CSV; file opens correctly in Excel with all columns
 6. Admin uploads a CSV of 50 questions; valid rows import, invalid rows listed with error reason
+
+---
+
+## Phase 5 — Improvements to the Existing App
+
+**Goal**: improvements to the existing app
+
+**Depends on**: Phase 4
+
+**Plans**:
+- Wave 1: 05-01 — Shared types + API (pagination, export, bulk-archive, hard-delete)
+- Wave 2: 05-02 — Frontend infrastructure (sidebar active state, sonner, DataTable pagination)
+- Wave 3 (parallel): 05-03 — Questions page (export, checkboxes, bulk actions, delete, pagination)
+- Wave 3 (parallel): 05-04 — Submissions page (pagination)
 
 ---
 
