@@ -154,3 +154,12 @@ export interface TestConfigStats {
   bucket_80_89: number;
   bucket_90_100: number;
 }
+
+// Phase 5: Improvements
+
+export interface PaginatedResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
