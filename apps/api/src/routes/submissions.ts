@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { db } from '../db/client.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { requireRole } from '../middleware/rbac.js';
 
 const listQuerySchema = z.object({
   testConfigId: z.string().uuid().optional(),
@@ -16,7 +17,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 export async function submissionRoutes(app: FastifyInstance) {
   // GET /admin/submissions/export  — MUST be before /:linkId
-  app.get('/export', { preHandler: [authMiddleware] }, async (request, reply) => {
+  app.get('/export', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
     const queryRaw = request.query as Record<string, string>;
     const testConfigId = queryRaw.testConfigId;
 
@@ -66,7 +67,7 @@ export async function submissionRoutes(app: FastifyInstance) {
   });
 
   // GET /admin/submissions/compare  — MUST be before /:linkId
-  app.get('/compare', { preHandler: [authMiddleware] }, async (request, reply) => {
+  app.get('/compare', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
     const queryRaw = request.query as Record<string, string>;
     const idsParam = queryRaw.ids ?? '';
     const ids = idsParam.split(',').map((s: string) => s.trim()).filter(Boolean);
