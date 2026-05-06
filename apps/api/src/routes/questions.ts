@@ -336,7 +336,11 @@ export async function questionRoutes(app: FastifyInstance) {
     const data = await request.file();
     if (!data) return reply.status(400).send({ error: 'No file uploaded' });
 
-    const buffer = await data.toBuffer();
+    const buf = await data.toBuffer();
+    if (buf.length > 5 * 1024 * 1024) {
+      return reply.status(413).send({ error: 'File too large. Maximum size is 5MB.' });
+    }
+    const buffer = buf;
     const text = buffer.toString('utf-8').replace(/^﻿/, ''); // strip BOM
 
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
