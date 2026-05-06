@@ -122,7 +122,7 @@ export async function candidateRoutes(app: FastifyInstance) {
     `;
 
     const validIds = new Set<string>(
-      seededSample(pool as { id: string }[], link.num_questions, link.seed).map((q) => q.id)
+      seededSample(pool as unknown as { id: string }[], link.num_questions, link.seed).map((q) => q.id)
     );
 
     for (const qid of Object.keys(body.data.answers)) {
@@ -174,13 +174,13 @@ export async function candidateRoutes(app: FastifyInstance) {
       `;
 
       const totalQuestions = rows.length;
-      const correctCount = rows.filter((r: { candidate_answer: string; correct_option: string }) => r.candidate_answer === r.correct_option).length;
+      const correctCount = (rows as unknown as Array<{ candidate_answer: string; correct_option: string }>).filter((r) => r.candidate_answer === r.correct_option).length;
       scorePct = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
       pass = scorePct >= link.pass_threshold_pct;
 
       // Compute skill area breakdown
       const skillMap = new Map<string, { correct: number; total: number }>();
-      for (const r of rows as Array<{ candidate_answer: string; correct_option: string; skill_area: string }>) {
+      for (const r of rows as unknown as Array<{ candidate_answer: string; correct_option: string; skill_area: string }>) {
         const entry = skillMap.get(r.skill_area) ?? { correct: 0, total: 0 };
         entry.total += 1;
         if (r.candidate_answer === r.correct_option) entry.correct += 1;
