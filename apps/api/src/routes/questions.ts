@@ -70,6 +70,60 @@ export async function questionRoutes(app: FastifyInstance) {
     return reply.status(200).send({ data: rows, total: Number(countRow.count), page, pageSize });
   });
 
+  // GET /questions/export — CSV export (owner only, no pagination, same filters as list)
+  app.get('/export', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
+    const query = listQuerySchema.safeParse(request.query);
+    if (!query.success) return reply.status(400).send({ error: 'Invalid query params' });
+
+    const { technology, difficulty, skill_area, search, include_archived } = query.data;
+    const showArchived = include_archived === 'true';
+
+    const rows = await db`
+      SELECT q.*, t.name AS technology_name
+      FROM questions q
+      JOIN technologies t ON t.id = q.technology_id
+      WHERE q.is_latest = TRUE
+        ${showArchived ? db`` : db`AND q.is_active = TRUE`}
+        ${technology ? db`AND t.slug = ${technology}` : db``}
+        ${difficulty ? db`AND q.difficulty = ${difficulty}` : db``}
+        ${skill_area ? db`AND q.skill_area ILIKE ${'%' + skill_area + '%'}` : db``}
+        ${search ? db`AND q.text ILIKE ${'%' + search + '%'}` : db``}
+      ORDER BY q.created_at DESC
+    `;
+
+    const esc = (v: string | number | boolean | null | undefined) =>
+      `"${String(v ?? '').replace(/"/g, '""')}"`;
+
+    const headers = ['Technology', 'Difficulty', 'Skill Area', 'Question Text', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Option'];
+    const dataRows = (rows as unknown as Array<{
+      technology_name: string;
+      difficulty: string;
+      skill_area: string;
+      text: string;
+      option_a: string;
+      option_b: string;
+      option_c: string;
+      option_d: string;
+      correct_option: string;
+    }>).map(q => [
+      esc(q.technology_name),
+      esc(q.difficulty),
+      esc(q.skill_area),
+      esc(q.text),
+      esc(q.option_a),
+      esc(q.option_b),
+      esc(q.option_c),
+      esc(q.option_d),
+      esc(q.correct_option),
+    ].join(','));
+
+    const csv = [headers.map(h => esc(h)).join(','), ...dataRows].join('\r\n');
+
+    reply.header('Content-Type', 'text/csv');
+    reply.header('Content-Disposition', 'attachment; filename="questions-export.csv"');
+    return reply.send(csv);
+  });
+
   // GET /questions/:familyId/versions
   app.get('/:familyId/versions', { preHandler: authMiddleware }, async (request, reply) => {
     const { familyId } = request.params as { familyId: string };
