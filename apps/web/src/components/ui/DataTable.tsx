@@ -7,13 +7,24 @@ import {
   type ColumnDef,
 } from '@tanstack/react-table';
 
+interface PaginationProps {
+  page: number;
+  pageSize: number;
+  total: number;
+  onPageChange: (p: number) => void;
+}
+
 interface DataTableProps<T> {
   columns: ColumnDef<T>[];
   data: T[];
+  pagination?: PaginationProps;
 }
 
-export function DataTable<T>({ columns, data }: DataTableProps<T>) {
+export function DataTable<T>({ columns, data, pagination }: DataTableProps<T>) {
   const table = useReactTable({ data, columns, getCoreRowModel: getCoreRowModel() });
+
+  const showingStart = pagination ? (pagination.page - 1) * pagination.pageSize + 1 : 1;
+  const showingEnd = pagination ? Math.min(pagination.page * pagination.pageSize, pagination.total) : data.length;
 
   return (
     <div className="overflow-x-auto">
@@ -59,6 +70,29 @@ export function DataTable<T>({ columns, data }: DataTableProps<T>) {
           )}
         </tbody>
       </table>
+      {pagination && (
+        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-white text-sm text-gray-600">
+          <span>
+            Showing {showingStart}–{showingEnd} of {pagination.total}
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => pagination.onPageChange(pagination.page - 1)}
+              disabled={pagination.page <= 1}
+              className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+            >
+              Prev
+            </button>
+            <button
+              onClick={() => pagination.onPageChange(pagination.page + 1)}
+              disabled={pagination.page * pagination.pageSize >= pagination.total}
+              className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
