@@ -162,7 +162,7 @@ export async function questionRoutes(app: FastifyInstance) {
       JOIN questions q ON q.id = ca.question_id
       WHERE q.family_id = ANY(${ids}::uuid[])
     `;
-    const referencedSet = new Set(referenced.map((r: { family_id: string }) => r.family_id));
+    const referencedSet = new Set((referenced as unknown as Array<{ family_id: string }>).map(r => r.family_id));
     const deletable = ids.filter(id => !referencedSet.has(id));
     const blocked = ids.filter(id => referencedSet.has(id)).map(id => ({ id, count: -1 }));
 
