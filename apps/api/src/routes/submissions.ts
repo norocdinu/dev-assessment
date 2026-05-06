@@ -8,6 +8,8 @@ const listQuerySchema = z.object({
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
   difficulty: z.enum(['junior', 'mid', 'senior']).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25),
 });
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -113,7 +115,20 @@ export async function submissionRoutes(app: FastifyInstance) {
     const query = listQuerySchema.safeParse(request.query);
     if (!query.success) return reply.status(400).send({ error: 'Invalid query params' });
 
-    const { testConfigId, dateFrom, dateTo, difficulty } = query.data;
+    const { testConfigId, dateFrom, dateTo, difficulty, page, pageSize } = query.data;
+    const offset = (page - 1) * pageSize;
+
+    const [countRow] = await db`
+      SELECT COUNT(*) AS count
+      FROM submission_results sr
+      JOIN test_links   tl ON tl.id = sr.link_id
+      JOIN test_configs tc ON tc.id = tl.test_config_id
+      JOIN technologies t  ON t.id  = tc.technology_id
+      WHERE (${testConfigId ?? null} IS NULL OR tl.test_config_id = ${testConfigId ?? null})
+        AND (${dateFrom ?? null} IS NULL OR tl.submitted_at >= ${dateFrom ?? null}::timestamptz)
+        AND (${dateTo ?? null} IS NULL OR tl.submitted_at <= ${dateTo ?? null}::timestamptz)
+        AND (${difficulty ?? null} IS NULL OR tc.difficulty = ${difficulty ?? null})
+    `;
 
     const rows = await db`
       SELECT
@@ -137,9 +152,10 @@ export async function submissionRoutes(app: FastifyInstance) {
         AND (${dateTo ?? null} IS NULL OR tl.submitted_at <= ${dateTo ?? null}::timestamptz)
         AND (${difficulty ?? null} IS NULL OR tc.difficulty = ${difficulty ?? null})
       ORDER BY tl.submitted_at DESC
+      LIMIT ${pageSize} OFFSET ${offset}
     `;
 
-    return reply.status(200).send(rows);
+    return reply.status(200).send({ data: rows, total: Number(countRow.count), page, pageSize });
   });
 
   // GET /admin/submissions/:linkId  — single submission detail (Phase 3)

@@ -27,11 +27,51 @@ const listQuerySchema = z.object({
   skill_area: z.string().optional(),
   search: z.string().optional(),
   include_archived: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25),
 });
 
 export async function questionRoutes(app: FastifyInstance) {
   // GET /questions
   app.get('/', { preHandler: authMiddleware }, async (request, reply) => {
+    const query = listQuerySchema.safeParse(request.query);
+    if (!query.success) return reply.status(400).send({ error: 'Invalid query params' });
+
+    const { technology, difficulty, skill_area, search, include_archived, page, pageSize } = query.data;
+    const showArchived = include_archived === 'true';
+    const offset = (page - 1) * pageSize;
+
+    const [countRow] = await db`
+      SELECT COUNT(*) AS count
+      FROM questions q
+      JOIN technologies t ON t.id = q.technology_id
+      WHERE q.is_latest = TRUE
+        ${showArchived ? db`` : db`AND q.is_active = TRUE`}
+        ${technology ? db`AND t.slug = ${technology}` : db``}
+        ${difficulty ? db`AND q.difficulty = ${difficulty}` : db``}
+        ${skill_area ? db`AND q.skill_area ILIKE ${'%' + skill_area + '%'}` : db``}
+        ${search ? db`AND q.text ILIKE ${'%' + search + '%'}` : db``}
+    `;
+
+    const rows = await db`
+      SELECT q.*, t.name AS technology_name
+      FROM questions q
+      JOIN technologies t ON t.id = q.technology_id
+      WHERE q.is_latest = TRUE
+        ${showArchived ? db`` : db`AND q.is_active = TRUE`}
+        ${technology ? db`AND t.slug = ${technology}` : db``}
+        ${difficulty ? db`AND q.difficulty = ${difficulty}` : db``}
+        ${skill_area ? db`AND q.skill_area ILIKE ${'%' + skill_area + '%'}` : db``}
+        ${search ? db`AND q.text ILIKE ${'%' + search + '%'}` : db``}
+      ORDER BY q.created_at DESC
+      LIMIT ${pageSize} OFFSET ${offset}
+    `;
+
+    return reply.status(200).send({ data: rows, total: Number(countRow.count), page, pageSize });
+  });
+
+  // GET /questions/export — CSV export (owner only, no pagination, same filters as list)
+  app.get('/export', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
     const query = listQuerySchema.safeParse(request.query);
     if (!query.success) return reply.status(400).send({ error: 'Invalid query params' });
 
@@ -51,7 +91,99 @@ export async function questionRoutes(app: FastifyInstance) {
       ORDER BY q.created_at DESC
     `;
 
-    return rows;
+    const esc = (v: string | number | boolean | null | undefined) =>
+      `"${String(v ?? '').replace(/"/g, '""')}"`;
+
+    const headers = ['Technology', 'Difficulty', 'Skill Area', 'Question Text', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Option'];
+    const dataRows = (rows as unknown as Array<{
+      technology_name: string;
+      difficulty: string;
+      skill_area: string;
+      text: string;
+      option_a: string;
+      option_b: string;
+      option_c: string;
+      option_d: string;
+      correct_option: string;
+    }>).map(q => [
+      esc(q.technology_name),
+      esc(q.difficulty),
+      esc(q.skill_area),
+      esc(q.text),
+      esc(q.option_a),
+      esc(q.option_b),
+      esc(q.option_c),
+      esc(q.option_d),
+      esc(q.correct_option),
+    ].join(','));
+
+    const csv = [headers.map(h => esc(h)).join(','), ...dataRows].join('\r\n');
+
+    reply.header('Content-Type', 'text/csv');
+    reply.header('Content-Disposition', 'attachment; filename="questions-export.csv"');
+    return reply.send(csv);
+  });
+
+  // PATCH /questions/bulk-archive — set is_active = false for all is_latest rows in given family IDs (owner only)
+  app.patch('/bulk-archive', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
+    const body = z.object({ ids: z.array(z.string().uuid()).min(1) }).safeParse(request.body);
+    if (!body.success) return reply.status(400).send({ error: body.error.flatten() });
+
+    const { ids } = body.data;
+
+    const result = await db`
+      UPDATE questions
+      SET is_active = FALSE
+      WHERE family_id = ANY(${ids}::uuid[]) AND is_latest = TRUE
+    `;
+
+    await logAudit({
+      adminId: getAuthUser(request).id,
+      action: 'question.archive',
+      entityType: 'question',
+      entityId: ids.join(','),
+      detail: { bulk: true, count: result.count },
+    });
+
+    return reply.status(200).send({ archived: result.count });
+  });
+
+  // POST /questions/bulk-delete — hard delete families with no submission refs, return blocked list (owner only)
+  app.post('/bulk-delete', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
+    const body = z.object({ ids: z.array(z.string().uuid()).min(1) }).safeParse(request.body);
+    if (!body.success) return reply.status(400).send({ error: body.error.flatten() });
+
+    const { ids } = body.data;
+    let deleted = 0;
+    const blocked: Array<{ id: string; count: number }> = [];
+
+    for (const familyId of ids) {
+      const [refCheck] = await db`
+        SELECT COUNT(*) AS count
+        FROM candidate_answers ca
+        JOIN questions q ON q.id = ca.question_id
+        WHERE q.family_id = ${familyId}
+      `;
+      const refCount = Number(refCheck.count);
+      if (refCount > 0) {
+        blocked.push({ id: familyId, count: refCount });
+      } else {
+        await db`DELETE FROM questions WHERE family_id = ${familyId}`;
+        deleted++;
+      }
+    }
+
+    if (deleted > 0) {
+      await logAudit({
+        adminId: getAuthUser(request).id,
+        action: 'question.delete',
+        entityType: 'question',
+        entityId: ids.join(','),
+        detail: { bulk: true, deleted, blocked: blocked.length },
+      });
+    }
+
+    return reply.status(200).send({ deleted, blocked });
   });
 
   // GET /questions/:familyId/versions
@@ -143,6 +275,38 @@ export async function questionRoutes(app: FastifyInstance) {
     });
 
     return newVersion;
+  });
+
+  // DELETE /questions/:familyId/hard — permanent delete, blocked if referenced in candidate_answers (owner only)
+  app.delete('/:familyId/hard', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
+    const { familyId } = request.params as { familyId: string };
+
+    const [refCheck] = await db`
+      SELECT COUNT(*) AS count
+      FROM candidate_answers ca
+      JOIN questions q ON q.id = ca.question_id
+      WHERE q.family_id = ${familyId}
+    `;
+    const refCount = Number(refCheck.count);
+
+    if (refCount > 0) {
+      return reply.status(409).send({
+        error: 'used_in_submissions',
+        count: refCount,
+        message: `This question was used in ${refCount} past submission${refCount !== 1 ? 's' : ''} and cannot be deleted. Archive it to hide it from future tests.`,
+      });
+    }
+
+    await db`DELETE FROM questions WHERE family_id = ${familyId}`;
+
+    await logAudit({
+      adminId: getAuthUser(request).id,
+      action: 'question.delete',
+      entityType: 'question',
+      entityId: familyId,
+    });
+
+    return reply.status(200).send({ ok: true });
   });
 
   // DELETE /questions/:familyId (soft-delete)
