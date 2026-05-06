@@ -124,6 +124,30 @@ export async function questionRoutes(app: FastifyInstance) {
     return reply.send(csv);
   });
 
+  // PATCH /questions/bulk-archive — set is_active = false for all is_latest rows in given family IDs (owner only)
+  app.patch('/bulk-archive', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
+    const body = z.object({ ids: z.array(z.string().uuid()).min(1) }).safeParse(request.body);
+    if (!body.success) return reply.status(400).send({ error: body.error.flatten() });
+
+    const { ids } = body.data;
+
+    const result = await db`
+      UPDATE questions
+      SET is_active = FALSE
+      WHERE family_id = ANY(${ids}::uuid[]) AND is_latest = TRUE
+    `;
+
+    await logAudit({
+      adminId: getAuthUser(request).id,
+      action: 'question.archive',
+      entityType: 'question',
+      entityId: ids.join(','),
+      detail: { bulk: true, count: result.count },
+    });
+
+    return reply.status(200).send({ archived: result.count });
+  });
+
   // GET /questions/:familyId/versions
   app.get('/:familyId/versions', { preHandler: authMiddleware }, async (request, reply) => {
     const { familyId } = request.params as { familyId: string };
