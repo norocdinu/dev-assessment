@@ -96,17 +96,17 @@
 
 ---
 
-## Phase 5 — Improvements to the Existing App
+## Phase 5 — Improvements to the Existing App ✓ (2026-05-07)
 
 **Goal**: improvements to the existing app
 
 **Depends on**: Phase 4
 
 **Plans**:
-- Wave 1: 05-01 — Shared types + API (pagination, export, bulk-archive, hard-delete)
-- Wave 2: 05-02 — Frontend infrastructure (sidebar active state, sonner, DataTable pagination)
-- Wave 3 (parallel): 05-03 — Questions page (export, checkboxes, bulk actions, delete, pagination)
-- Wave 3 (parallel): 05-04 — Submissions page (pagination)
+- Wave 1: 05-01 — Shared types + API (pagination, export, bulk-archive, hard-delete) ✓
+- Wave 2: 05-02 — Frontend infrastructure (sidebar active state, sonner, DataTable pagination) ✓
+- Wave 3 (parallel): 05-03 — Questions page (export, checkboxes, bulk actions, delete, pagination) ✓
+- Wave 3 (parallel): 05-04 — Submissions page (pagination) ✓
 
 ---
 
