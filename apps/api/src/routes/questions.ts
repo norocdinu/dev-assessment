@@ -148,6 +148,44 @@ export async function questionRoutes(app: FastifyInstance) {
     return reply.status(200).send({ archived: result.count });
   });
 
+  // POST /questions/bulk-delete — hard delete families with no submission refs, return blocked list (owner only)
+  app.post('/bulk-delete', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
+    const body = z.object({ ids: z.array(z.string().uuid()).min(1) }).safeParse(request.body);
+    if (!body.success) return reply.status(400).send({ error: body.error.flatten() });
+
+    const { ids } = body.data;
+    let deleted = 0;
+    const blocked: Array<{ id: string; count: number }> = [];
+
+    for (const familyId of ids) {
+      const [refCheck] = await db`
+        SELECT COUNT(*) AS count
+        FROM candidate_answers ca
+        JOIN questions q ON q.id = ca.question_id
+        WHERE q.family_id = ${familyId}
+      `;
+      const refCount = Number(refCheck.count);
+      if (refCount > 0) {
+        blocked.push({ id: familyId, count: refCount });
+      } else {
+        await db`DELETE FROM questions WHERE family_id = ${familyId}`;
+        deleted++;
+      }
+    }
+
+    if (deleted > 0) {
+      await logAudit({
+        adminId: getAuthUser(request).id,
+        action: 'question.delete',
+        entityType: 'question',
+        entityId: ids.join(','),
+        detail: { bulk: true, deleted, blocked: blocked.length },
+      });
+    }
+
+    return reply.status(200).send({ deleted, blocked });
+  });
+
   // GET /questions/:familyId/versions
   app.get('/:familyId/versions', { preHandler: authMiddleware }, async (request, reply) => {
     const { familyId } = request.params as { familyId: string };
