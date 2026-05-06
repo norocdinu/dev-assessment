@@ -9,21 +9,24 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "next": "14.2.5",
+    "@fastify/jwt": "10.0.0",
+    "@tanstack/react-table": "^8.19.3",
+    "axios": "^1.7.2",
+    "fastify": "5.8.5",
+    "next": "^16.2.4",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "@tanstack/react-table": "^8.19.3",
     "recharts": "^2.12.7",
-    "axios": "^1.7.2",
+    "vitest": "4.1.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "typescript": "^5.5.0",
     "@types/node": "^22.0.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
-    "tailwindcss": "^3.4.0",
+    "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0",
-    "autoprefixer": "^10.4.0"
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.5.0"
   }
 }
