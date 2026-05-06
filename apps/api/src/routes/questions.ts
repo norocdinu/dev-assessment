@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../db/client.js';
-import { authMiddleware } from '../middleware/auth.js';
+import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { requireRole } from '../middleware/rbac.js';
 import { logAudit } from '../lib/audit.js';
 
@@ -82,13 +82,13 @@ export async function questionRoutes(app: FastifyInstance) {
         ${familyId}, 1, ${body.data.technology_id}, ${body.data.difficulty},
         ${body.data.skill_area}, ${body.data.text}, ${body.data.option_a},
         ${body.data.option_b}, ${body.data.option_c}, ${body.data.option_d},
-        ${body.data.correct_option}, ${body.data.explanation ?? null}, ${request.user.id}
+        ${body.data.correct_option}, ${body.data.explanation ?? null}, ${getAuthUser(request).id}
       )
       RETURNING *
     `;
 
     await logAudit({
-      adminId: request.user.id,
+      adminId: getAuthUser(request).id,
       action: 'question.create',
       entityType: 'question',
       entityId: question.id,
@@ -128,14 +128,14 @@ export async function questionRoutes(app: FastifyInstance) {
           ${merged.difficulty}, ${merged.skill_area}, ${merged.text},
           ${merged.option_a}, ${merged.option_b}, ${merged.option_c},
           ${merged.option_d}, ${merged.correct_option}, ${merged.explanation ?? null},
-          ${request.user.id}
+          ${getAuthUser(request).id}
         )
         RETURNING *
       `;
     });
 
     await logAudit({
-      adminId: request.user.id,
+      adminId: getAuthUser(request).id,
       action: 'question.edit',
       entityType: 'question',
       entityId: newVersion.id,
@@ -157,7 +157,7 @@ export async function questionRoutes(app: FastifyInstance) {
     if (!row) return reply.status(404).send({ error: 'Question not found' });
 
     await logAudit({
-      adminId: request.user.id,
+      adminId: getAuthUser(request).id,
       action: 'question.archive',
       entityType: 'question',
       entityId: familyId,
@@ -240,7 +240,7 @@ export async function questionRoutes(app: FastifyInstance) {
             ${familyId}, 1, ${validated.data.technology_id}, ${validated.data.difficulty},
             ${validated.data.skill_area}, ${validated.data.text}, ${validated.data.option_a},
             ${validated.data.option_b}, ${validated.data.option_c}, ${validated.data.option_d},
-            ${validated.data.correct_option}, ${validated.data.explanation ?? null}, ${request.user.id}
+            ${validated.data.correct_option}, ${validated.data.explanation ?? null}, ${getAuthUser(request).id}
           )
         `;
         imported++;

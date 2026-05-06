@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { db } from '../db/client.js';
-import { authMiddleware } from '../middleware/auth.js';
+import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { requireRole } from '../middleware/rbac.js';
 
 const createSchema = z.object({
@@ -51,7 +51,7 @@ export async function testConfigRoutes(app: FastifyInstance) {
 
     const [config] = await db`
       INSERT INTO test_configs (name, technology_id, difficulty, num_questions, pass_threshold_pct, created_by)
-      VALUES (${name}, ${technology_id}, ${difficulty}, ${num_questions}, ${pass_threshold_pct}, ${request.user.id})
+      VALUES (${name}, ${technology_id}, ${difficulty}, ${num_questions}, ${pass_threshold_pct}, ${getAuthUser(request).id})
       RETURNING *
     `;
 

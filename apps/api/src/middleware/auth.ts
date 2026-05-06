@@ -1,9 +1,13 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 
-declare module '@fastify/jwt' {
-  interface FastifyJWT {
-    user: { id: string; email: string; role: string };
-  }
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: string;
+}
+
+export function getAuthUser(request: FastifyRequest): AuthUser {
+  return request.user as unknown as AuthUser;
 }
 
 export async function authMiddleware(
