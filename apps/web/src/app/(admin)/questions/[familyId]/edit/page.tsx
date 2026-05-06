@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { QuestionForm } from '@/components/ui/QuestionForm';
 import { api } from '@/lib/api';
 import type { Question, Technology } from '@dev-assessment/shared';
 
-export default function EditQuestionPage({ params }: { params: { familyId: string } }) {
+export default function EditQuestionPage() {
   const router = useRouter();
-  const { familyId } = params;
+  const { familyId } = useParams<{ familyId: string }>();
   const [question, setQuestion] = useState<Question | null>(null);
   const [technologies, setTechnologies] = useState<Technology[]>([]);
   const [loading, setLoading] = useState(false);
