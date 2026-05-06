@@ -15,8 +15,19 @@ import { statsRoutes } from './routes/stats.js';
 
 const app = Fastify({ logger: true });
 
+const allowedOrigins = new Set(
+  [
+    'http://localhost:3000',
+    'https://dev-assessmentweb-production.up.railway.app',
+    process.env.WEB_URL,
+  ].filter(Boolean) as string[]
+);
+
 await app.register(fastifyCors, {
-  origin: process.env.WEB_URL ?? 'http://localhost:3000',
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.has(origin)) return cb(null, true);
+    cb(new Error('Not allowed by CORS'), false);
+  },
   credentials: true,
 });
 
@@ -38,9 +49,11 @@ await app.register(submissionRoutes, { prefix: '/admin/submissions' });
 await app.register(statsRoutes, { prefix: '/admin/stats' });
 
 await app.register(async (candidateApp) => {
-  const allowedOrigin = process.env.WEB_URL ?? 'http://localhost:3000';
-  candidateApp.addHook('onRequest', async (_request, reply) => {
-    reply.header('Access-Control-Allow-Origin', allowedOrigin);
+  candidateApp.addHook('onRequest', async (request, reply) => {
+    const origin = request.headers.origin ?? '';
+    if (allowedOrigins.has(origin)) {
+      reply.header('Access-Control-Allow-Origin', origin);
+    }
     reply.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     reply.header('Access-Control-Allow-Headers', 'Content-Type');
   });
