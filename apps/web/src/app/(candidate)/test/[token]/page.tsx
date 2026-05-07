@@ -6,9 +6,12 @@ import { Timer } from '@/components/candidate/Timer';
 import { QuestionCard } from '@/components/candidate/QuestionCard';
 import { QuestionNav } from '@/components/candidate/QuestionNav';
 import { SubmitModal } from '@/components/candidate/SubmitModal';
+import { ProgressBar } from '@/components/candidate/ProgressBar';
 import type { CandidateQuestion, LocalSession } from '@dev-assessment/shared';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const BRAND_NAME = process.env.NEXT_PUBLIC_BRAND_NAME ?? 'Dev Assessment';
+const BRAND_LOGO = process.env.NEXT_PUBLIC_BRAND_LOGO_URL ?? null;
 const DURATION_MS = 30 * 60 * 1000;
 
 function getLocalSession(token: string): LocalSession | null {
@@ -63,32 +66,25 @@ export default function TestPage() {
         router.push(`/test/${token}/results`);
         return;
       }
-
       if (res.status === 409) {
-        // D-09: already submitted — treat as success
         router.push(`/test/${token}/results`);
         return;
       }
-
       if (res.status === 410) {
-        // D-08: deadline exceeded
         router.push(`/test/${token}/expired?state=timelimit`);
         return;
       }
 
-      // D-07: other error — show inline with retry
       setSubmitError('Submission failed. Check your connection and try again.');
       submittingRef.current = false;
       setSubmitting(false);
     } catch {
-      // D-07: network error
       setSubmitError('Submission failed. Check your connection and try again.');
       submittingRef.current = false;
       setSubmitting(false);
     }
   }, [token, answers, router]);
 
-  // Auto-submit timer interval
   useEffect(() => {
     if (questions.length === 0 || serverStartedAtMs === 0) return;
 
@@ -104,7 +100,6 @@ export default function TestPage() {
     return () => clearInterval(interval);
   }, [serverStartedAtMs, clockOffset, questions.length, doSubmit]);
 
-  // Session load on mount
   useEffect(() => {
     if (!token) return;
 
@@ -189,20 +184,15 @@ export default function TestPage() {
   }
 
   function handleSubmitClick() {
-    const unanswered = questions.filter((q) => !answers[q.id]).length;
-    if (unanswered > 0) {
-      setShowModal(true);
-    } else {
-      doSubmit();
-    }
+    setShowModal(true);
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto" />
-          <p className="mt-4 text-sm text-gray-500">Loading your test…</p>
+          <div className="w-8 h-8 border-2 border-border border-t-[var(--brand)] rounded-full animate-spin mx-auto" />
+          <p className="mt-4 text-sm text-muted">Loading your test…</p>
         </div>
       </div>
     );
@@ -211,22 +201,45 @@ export default function TestPage() {
   if (questions.length === 0) return null;
 
   const currentQuestion = questions[currentIndex];
-  const unansweredCount = questions.filter((q) => !answers[q.id]).length;
+  const answeredCount = Object.keys(answers).length;
+  const unansweredCount = questions.length - answeredCount;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-        <Timer remainingMs={Math.max(0, remainingMs)} />
-        <span
-          className="text-sm font-medium text-gray-500"
-          aria-label={`Question ${currentIndex + 1} of ${questions.length}`}
-        >
-          Question {currentIndex + 1} of {questions.length}
-        </span>
+    <div className="min-h-screen bg-background">
+      {/* Sticky header */}
+      <header className="sticky top-0 z-10 bg-card border-b border-border">
+        <div className="px-4 py-3 flex items-center justify-between">
+          {/* Brand */}
+          <div className="flex items-center gap-2">
+            {BRAND_LOGO ? (
+              <img src={BRAND_LOGO} alt={BRAND_NAME} className="h-7 object-contain" />
+            ) : (
+              <span className="text-sm font-bold text-foreground">{BRAND_NAME}</span>
+            )}
+          </div>
+          {/* Timer + question counter */}
+          <div className="flex items-center gap-4">
+            <span className="text-xs font-medium text-muted hidden sm:block">
+              {currentIndex + 1} / {questions.length}
+            </span>
+            <Timer remainingMs={Math.max(0, remainingMs)} />
+          </div>
+        </div>
+        {/* Progress bar — full width, flush below header */}
+        <ProgressBar answered={answeredCount} total={questions.length} />
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="mt-4">
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        {/* Question navigation */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-medium text-muted">
+              Question {currentIndex + 1} of {questions.length}
+            </p>
+            <p className="text-xs text-muted">
+              {answeredCount} answered
+            </p>
+          </div>
           <QuestionNav
             totalQuestions={questions.length}
             currentIndex={currentIndex}
@@ -236,7 +249,8 @@ export default function TestPage() {
           />
         </div>
 
-        <div className="mt-6">
+        {/* Question card */}
+        <div className="mt-4">
           <QuestionCard
             question={currentQuestion}
             questionNumber={currentIndex + 1}
@@ -246,34 +260,36 @@ export default function TestPage() {
           />
         </div>
 
-        <div className="flex items-center justify-between mt-6">
+        {/* Navigation buttons */}
+        <div className="flex items-center justify-between mt-5">
           <button
             onClick={() => handleNavigate(currentIndex - 1)}
             disabled={currentIndex === 0}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-5 py-3 text-sm font-medium text-foreground bg-card border border-border rounded-xl hover:bg-border/40 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             ← Previous
           </button>
           <button
             onClick={() => handleNavigate(currentIndex + 1)}
             disabled={currentIndex === questions.length - 1}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-5 py-3 text-sm font-medium text-white bg-[var(--brand)] rounded-xl hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
           >
             Next →
           </button>
         </div>
 
-        <div className="mt-8 flex flex-col items-end">
+        {/* Submit */}
+        <div className="mt-6 flex flex-col items-end">
           {submitError && (
             <div className="mb-3 flex items-center gap-3">
-              <p className="text-sm text-red-600">{submitError}</p>
+              <p className="text-sm text-red-500">{submitError}</p>
               <button
                 onClick={() => {
                   submittingRef.current = false;
                   setSubmitting(false);
                   doSubmit();
                 }}
-                className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                className="px-3 py-1.5 text-sm font-medium text-white bg-[var(--brand)] rounded-lg hover:opacity-90"
               >
                 Retry
               </button>
@@ -282,12 +298,12 @@ export default function TestPage() {
           <button
             onClick={handleSubmitClick}
             disabled={submitting}
-            className="px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50"
+            className="px-6 py-3 bg-[var(--brand)] text-white text-sm font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
           >
             {submitting ? 'Submitting…' : 'Submit Test'}
           </button>
           {unansweredCount > 0 && (
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted mt-1.5">
               {unansweredCount} {unansweredCount === 1 ? 'question' : 'questions'} not yet answered
             </p>
           )}
@@ -297,6 +313,8 @@ export default function TestPage() {
       {showModal && (
         <SubmitModal
           unansweredCount={unansweredCount}
+          totalCount={questions.length}
+          remainingMs={Math.max(0, remainingMs)}
           onConfirm={() => {
             setShowModal(false);
             doSubmit();

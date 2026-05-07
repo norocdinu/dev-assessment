@@ -15,20 +15,33 @@ function formatTime(ms: number): { minutes: number; seconds: number; display: st
 export function Timer({ remainingMs }: TimerProps) {
   const { minutes, seconds, display } = formatTime(remainingMs);
 
-  const colorClass =
-    remainingMs > 300000
-      ? 'text-green-600'
-      : remainingMs > 60000
-      ? 'text-amber-600'
-      : 'text-red-600 animate-pulse';
+  const isUrgent = remainingMs <= 300000; // under 5 minutes
+  const isCritical = remainingMs <= 60000; // under 1 minute
+
+  const colorClass = isCritical
+    ? 'text-red-500 animate-pulse'
+    : isUrgent
+    ? 'text-amber-500'
+    : 'text-[var(--brand)]';
 
   return (
-    <span
-      className={`inline-flex items-center px-3 py-1 rounded-full text-xl font-semibold ${colorClass}`}
+    <div
+      className={`flex items-center gap-2 ${colorClass}`}
       aria-live="polite"
       aria-label={`Time remaining: ${minutes} minutes ${seconds} seconds`}
     >
-      {display}
-    </span>
+      <svg
+        className="w-4 h-4 shrink-0"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={2}
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+      <span className="text-xl font-bold tabular-nums">{display}</span>
+    </div>
   );
 }
