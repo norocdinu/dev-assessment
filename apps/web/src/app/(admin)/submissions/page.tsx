@@ -14,6 +14,9 @@ import {
   type Row,
 } from '@tanstack/react-table';
 import { api } from '@/lib/api';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ClipboardList } from 'lucide-react';
 import type { SubmissionListRow, TestConfig, TestConfigStats } from '@dev-assessment/shared';
 
 interface TestConfigOption extends TestConfig {
@@ -314,7 +317,14 @@ export default function SubmissionsPage() {
       {filterTestConfigId && (
         <div className="mb-4 p-4 bg-card border border-border rounded-lg">
           {statsLoading ? (
-            <p className="text-sm text-muted/70">Loading stats…</p>
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="bg-card border border-border rounded-lg p-3 space-y-2">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-7 w-14" />
+                </div>
+              ))}
+            </div>
           ) : stats ? (
             <div>
               <div className="flex gap-8 mb-4">
@@ -354,7 +364,32 @@ export default function SubmissionsPage() {
 
       {/* Table */}
       {loading ? (
-        <p className="text-sm text-muted/70">Loading…</p>
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/10 border-b border-border">
+                <tr>
+                  {['', 'Score', 'Pass/Fail', 'Test', 'Time', 'Submitted', ''].map((h, i) => (
+                    <th key={i} className="px-4 py-3 text-left font-medium text-foreground/70">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 5 }).map((_, rowIdx) => (
+                  <tr key={rowIdx} className={`border-b border-border/50 ${rowIdx % 2 === 1 ? 'bg-muted/5' : 'bg-card'}`}>
+                    <td className="px-4 py-3"><Skeleton className="h-4 w-4" /></td>
+                    <td className="px-4 py-3"><Skeleton className="h-4 w-10" /></td>
+                    <td className="px-4 py-3"><Skeleton className="h-5 w-12 rounded-full" /></td>
+                    <td className="px-4 py-3"><Skeleton className="h-4 w-28" /></td>
+                    <td className="px-4 py-3"><Skeleton className="h-4 w-10" /></td>
+                    <td className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>
+                    <td className="px-4 py-3"><Skeleton className="h-4 w-14" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       ) : (
         <div className="bg-card border border-border rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
@@ -380,17 +415,18 @@ export default function SubmissionsPage() {
                     ))}
                   </tr>
                 ))}
-                {table.getRowModel().rows.length === 0 && (
-                  <tr>
-                    <td colSpan={columns.length} className="px-4 py-8 text-center text-muted/70">
-                      No submissions found
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
         </div>
+      )}
+
+      {!loading && total === 0 && (
+        <EmptyState
+          icon={<ClipboardList className="h-10 w-10" />}
+          title="No submissions yet"
+          description="Candidates who complete a test will appear here."
+        />
       )}
 
       {/* Pagination */}
