@@ -4,7 +4,7 @@ import { authMiddleware } from '../middleware/auth.js';
 
 export async function dashboardRoutes(app: FastifyInstance) {
   // GET /dashboard/stats — cross-config aggregate KPIs + recent submissions
-  app.get('/', { preHandler: [authMiddleware] }, async (_request, reply) => {
+  app.get('/stats', { preHandler: [authMiddleware] }, async (_request, reply) => {
     const [stats] = await db`
       SELECT
         COUNT(*)                                                                AS total_candidates,
