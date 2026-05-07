@@ -6,6 +6,10 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/DataTable';
 import { api } from '@/lib/api';
 import type { TestConfig } from '@dev-assessment/shared';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Settings2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface TestConfigRow extends TestConfig {
   technology_name: string;
@@ -16,6 +20,7 @@ export default function TestConfigsPage() {
   const [configs, setConfigs] = useState<TestConfigRow[]>([]);
   const [userRole, setUserRole] = useState('');
   const [loading, setLoading] = useState(true);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     api.get('/auth/me').then((r) => setUserRole(r.data.user.role)).catch(() => {});
@@ -32,10 +37,19 @@ export default function TestConfigsPage() {
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Delete this test configuration?')) return;
-    await api.delete(`/test-configs/${id}`);
-    fetchConfigs();
+  function requestDelete(id: string) {
+    setConfirmDeleteId(id);
+  }
+
+  async function executeDelete(id: string) {
+    setConfirmDeleteId(null);
+    try {
+      await api.delete(`/test-configs/${id}`);
+      toast.success('Test configuration deleted');
+      fetchConfigs();
+    } catch {
+      toast.error('Failed to delete test configuration');
+    }
   }
 
   const isOwner = userRole === 'owner';
@@ -63,7 +77,7 @@ export default function TestConfigsPage() {
           </button>
           {isOwner && (
             <button
-              onClick={() => handleDelete(row.original.id)}
+              onClick={() => requestDelete(row.original.id)}
               className="text-red-600 hover:underline text-xs"
             >
               Delete
@@ -87,11 +101,35 @@ export default function TestConfigsPage() {
           </button>
         )}
       </div>
-      {loading ? (
-        <p className="text-sm text-muted/70">Loading…</p>
-      ) : (
-        <DataTable columns={columns} data={configs} />
+      <DataTable columns={columns} data={configs} loading={loading} />
+
+      {!loading && configs.length === 0 && (
+        <EmptyState
+          icon={<Settings2 className="h-10 w-10" />}
+          title="No test configurations"
+          description="Create your first test config to start sending assessment links."
+          action={
+            isOwner ? (
+              <button
+                onClick={() => router.push('/test-configs/new')}
+                className="px-4 py-2 bg-[var(--brand)] text-white text-sm rounded-md hover:bg-[var(--brand)]/90"
+              >
+                New Test Config
+              </button>
+            ) : undefined
+          }
+        />
       )}
+
+      <ConfirmDialog
+        open={confirmDeleteId !== null}
+        title="Delete test configuration?"
+        description="This permanently removes the test configuration and cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => confirmDeleteId && executeDelete(confirmDeleteId)}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 }
