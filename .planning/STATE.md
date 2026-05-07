@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Front End Improvements
-status: defining_requirements
+status: ready
 last_updated: "2026-05-07T00:00:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -32,7 +32,10 @@ See: .planning/PROJECT.md (updated 2026-05-07)
 
 | Phase | Status | Plans | Notes |
 |-------|--------|-------|-------|
-| (phases will be defined in roadmap) | — | — | — |
+| Phase 9 — Candidate Experience Redesign | ○ Pending | — | CAND-01–04 |
+| Phase 10 — Admin Visual Foundation | ○ Pending | — | THEME-01, UI-01, RESP-01 |
+| Phase 11 — UX Pattern Library | ○ Pending | — | UI-02, UI-03, UI-04 |
+| Phase 12 — Reporting & Dashboard Filters | ○ Pending | — | RPT-01–03 |
 
 ## Accumulated Context
 

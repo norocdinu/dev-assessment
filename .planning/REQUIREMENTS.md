@@ -1,61 +1,61 @@
-# Requirements — Dev Assessment Platform v1.1
+# Requirements — Dev Assessment Platform v1.2
 
 **Defined:** 2026-05-07
 **Core Value:** A candidate receives a link and gets a fair, repeatable, automatically-graded test — every time, for any technology, at any seniority level.
 
-## v1.1 Requirements
+## v1.2 Requirements
 
-### Bug Fixes (FIX)
+### Candidate Experience (CAND)
 
-- [x] **FIX-01**: Admin can import a CSV file that was previously exported from the question bank without any row errors (round-trip fix)
+- [ ] **CAND-01**: Candidate test page uses a modern, mobile-first design that conveys quality and trust as the company's first touchpoint with candidates
+- [ ] **CAND-02**: Candidate test page supports dark mode (respects OS `prefers-color-scheme`)
+- [ ] **CAND-03**: Candidate test page shows a progress indicator (current question / total) throughout the test
+- [ ] **CAND-04**: Candidate sees an explicit submission confirmation step and a clear results/thank-you screen after submitting
 
-### Test Config UX (TESTS)
+### Theming (THEME)
 
-- [ ] **TESTS-06**: Test link creation form labels the name field as "Candidate Name" and stores the value with the link
-- [ ] **TESTS-07**: Test link creation form defaults pass threshold to 80%
+- [ ] **THEME-01**: Admin app has a dark/light mode toggle that persists the user's preference across sessions
 
-### Analytics Dashboard (DASH)
+### UI Polish (UI)
 
-- [ ] **DASH-06**: Dashboard shows a KPI summary strip: total candidates, overall pass rate, average score, weakest skill area
-- [ ] **DASH-07**: Dashboard shows a recent candidates list (last 10 submissions: candidate name, test config, score, pass/fail, date)
-- [ ] **DASH-08**: Dashboard shows a score distribution chart (bar chart bucketed by 10% bands, with pass threshold reference line)
-- [ ] **DASH-09**: Dashboard shows a competency breakdown chart (horizontal bar: average score % per skill-area tag)
+- [ ] **UI-01**: Admin app uses a consistent type scale, spacing system, and accent colour palette throughout all pages
+- [ ] **UI-02**: All data tables and card panels show skeleton placeholders while data is loading
+- [ ] **UI-03**: All pages with no data display a friendly empty state with a message and suggested next action
+- [ ] **UI-04**: All success and error feedback uses sonner toast notifications (no `window.alert` or `window.confirm` for non-destructive actions)
 
-### Submission Management (SUB)
+### Reporting (RPT)
 
-- [ ] **SUB-01**: Owner can permanently delete a submission from the submission detail page (confirmation required; cascades to answers and cached results)
+- [ ] **RPT-01**: Owner or reviewer can download a PDF of a candidate's full submission results
+- [ ] **RPT-02**: Dashboard stats and charts can be filtered by test configuration
+- [ ] **RPT-03**: Dashboard stats and charts can be filtered by date range (last 7 / 30 / 90 days or custom)
 
-### Account & Access (ACCESS)
+### Responsive (RESP)
 
-- [ ] **ACCESS-05**: Any admin can open an account settings page and change their own password (requires entering current password)
-- [ ] **ACCESS-06**: Owner can view a list of all admin accounts and create, edit, and delete accounts from a dedicated page
-- [ ] **ACCESS-07**: System prevents deletion of the last remaining owner account and returns a clear error
-- [ ] **ACCESS-08**: New "Member" role can generate test links and view/export results; cannot add, edit, or delete questions; cannot manage test configs, accounts, or delete submissions
+- [ ] **RESP-01**: Admin panel layout is functional and navigable on tablet-sized screens (≥768px)
 
 ---
 
-## v2 (Deferred)
+## Deferred (Future)
 
-- PDF export of individual candidate results
 - AI-assisted question generation
 - Question effectiveness analytics (difficulty index, discrimination index)
 - Candidate email notifications
 - Webhook / ATS integration
 - Adaptive difficulty (CAT-style)
+- Radar/spider charts for competency breakdown
 
 ---
 
-## Out of Scope — v1.1
+## Out of Scope — v1.2
 
 | Feature | Reason |
 |---------|--------|
-| Email-based invites for new accounts | Requires email infra; owner creates accounts directly for now |
-| Radar/spider charts | Harder to read than horizontal bar for this use case |
-| Time-series trend charts | Too little data at current scale; deferred |
-| Bulk submission deletion | Risky without recycle bin; single-delete confirmation is sufficient |
-| Avatar / timezone / 2FA in account settings | Adds complexity; name + password change covers real need |
-| Email display name changes | Owner manages emails at creation; edits out of scope for v1.1 |
-| Soft-delete for submissions | Would require updating every stats/list query; hard-delete is simpler |
+| Native mobile app | Responsive web covers the candidate use case ✓ |
+| Admin full mobile optimisation | Admin is a desktop/tablet tool; mobile is a non-priority ✓ |
+| Custom theme/white-labelling | Single company use case; one brand is sufficient |
+| Real-time chart updates (WebSocket) | Polling or manual refresh sufficient at current scale |
+| Bulk PDF export | Single-candidate PDF covers the hiring review workflow |
+| Scheduled/email report delivery | Out of scope; download on demand is sufficient |
 
 ---
 
@@ -63,24 +63,25 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | Phase 6 | Complete |
-| TESTS-06 | Phase 7 | Pending |
-| TESTS-07 | Phase 7 | Pending |
-| DASH-06 | Phase 8 | Pending |
-| DASH-07 | Phase 8 | Pending |
-| DASH-08 | Phase 8 | Pending |
-| DASH-09 | Phase 8 | Pending |
-| SUB-01 | Phase 8 | Pending |
-| ACCESS-05 | Phase 7 | Pending |
-| ACCESS-06 | Phase 7 | Pending |
-| ACCESS-07 | Phase 7 | Pending |
-| ACCESS-08 | Phase 7 | Pending |
+| CAND-01 | Phase 9 | Pending |
+| CAND-02 | Phase 9 | Pending |
+| CAND-03 | Phase 9 | Pending |
+| CAND-04 | Phase 9 | Pending |
+| THEME-01 | Phase 10 | Pending |
+| UI-01 | Phase 10 | Pending |
+| RESP-01 | Phase 10 | Pending |
+| UI-02 | Phase 11 | Pending |
+| UI-03 | Phase 11 | Pending |
+| UI-04 | Phase 11 | Pending |
+| RPT-01 | Phase 12 | Pending |
+| RPT-02 | Phase 12 | Pending |
+| RPT-03 | Phase 12 | Pending |
 
 **Coverage:**
-- v1.1 requirements: 12 total
-- Mapped to phases: 12
+- v1.2 requirements: 13 total
+- Mapped to phases: 13
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-07*
-*Last updated: 2026-05-07 after initial definition*
+*Last updated: 2026-05-07 — initial definition*
