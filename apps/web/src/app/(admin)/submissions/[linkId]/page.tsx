@@ -6,6 +6,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/DataTable';
 import { api } from '@/lib/api';
 import type { AdminSubmissionResult, AdminAnswerSheetRow } from '@dev-assessment/shared';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { toast } from 'sonner';
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -103,6 +105,7 @@ export default function SubmissionDetailPage() {
   const [error, setError] = useState('');
   const [userRole, setUserRole] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (!linkId) return;
@@ -113,6 +116,22 @@ export default function SubmissionDetailPage() {
       .finally(() => setLoading(false));
     api.get('/auth/me').then(r => setUserRole(r.data.user.role)).catch(() => {});
   }, [linkId]);
+
+  function requestDelete() {
+    setConfirmDelete(true);
+  }
+
+  async function executeDelete() {
+    setConfirmDelete(false);
+    setDeleting(true);
+    try {
+      await api.delete(`/admin/submissions/${linkId}`);
+      router.push('/submissions');
+    } catch {
+      setDeleting(false);
+      toast.error('Failed to delete submission. Please try again.');
+    }
+  }
 
   if (loading) {
     return (
@@ -128,18 +147,6 @@ export default function SubmissionDetailPage() {
         <p className="text-sm text-red-600">{error || 'Submission not found.'}</p>
       </div>
     );
-  }
-
-  async function handleDelete() {
-    if (!window.confirm("This will permanently remove this candidate's results. Are you sure?")) return;
-    setDeleting(true);
-    try {
-      await api.delete(`/admin/submissions/${linkId}`);
-      router.push('/submissions');
-    } catch {
-      setDeleting(false);
-      alert('Failed to delete submission. Please try again.');
-    }
   }
 
   const passClass = result.pass
@@ -174,7 +181,7 @@ export default function SubmissionDetailPage() {
             </span>
             {userRole === 'owner' && (
               <button
-                onClick={handleDelete}
+                onClick={requestDelete}
                 disabled={deleting}
                 className="px-3 py-1 text-sm text-red-600 border border-red-300 rounded-md hover:bg-red-50 disabled:opacity-50"
               >
@@ -231,6 +238,16 @@ export default function SubmissionDetailPage() {
         <h2 className="text-base font-semibold text-foreground mb-4">Answer Sheet</h2>
         <DataTable columns={answerSheetColumns} data={result.answer_sheet} />
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete submission?"
+        description="This will permanently remove this candidate's results and cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={executeDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }
