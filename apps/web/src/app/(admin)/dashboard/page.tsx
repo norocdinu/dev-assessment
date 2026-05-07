@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { api } from '@/lib/api';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 const ScoreDistributionChart = dynamic(() => import('./ScoreDistributionChart'), { ssr: false });
 const CompetencyChart = dynamic(() => import('./CompetencyChart'), { ssr: false });
@@ -32,6 +33,49 @@ interface CompetencyItem {
   avgScore: number;
 }
 
+function DashboardSkeleton() {
+  return (
+    <div className="p-6 space-y-6">
+      <Skeleton className="h-7 w-32" />
+
+      {/* KPI strip skeleton — 4 cards */}
+      <div className="grid grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="bg-card rounded-lg border border-border p-4 space-y-3">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-8 w-16" />
+          </div>
+        ))}
+      </div>
+
+      {/* Charts skeleton */}
+      <div className="grid grid-cols-2 gap-6">
+        <div className="bg-card rounded-lg border border-border p-4 space-y-3">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+        <div className="bg-card rounded-lg border border-border p-4 space-y-3">
+          <Skeleton className="h-4 w-36" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      </div>
+
+      {/* Recent submissions skeleton */}
+      <div className="bg-card rounded-lg border border-border p-4 space-y-3">
+        <Skeleton className="h-4 w-40" />
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="flex gap-4 py-1">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [competency, setCompetency] = useState<CompetencyItem[]>([]);
@@ -52,11 +96,7 @@ export default function DashboardPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="p-6 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-border border-t-[var(--brand)] rounded-full animate-spin" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (error || !stats) {
