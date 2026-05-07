@@ -47,9 +47,9 @@ All 24 v1 requirements — see [milestones/v1.0-REQUIREMENTS.md](milestones/v1.0
 - [x] Candidate test page shows a clear progress indicator and confirmation screen on submit — Validated in Phase 9 (2026-05-07)
 - [x] Admin app has a dark/light mode toggle persisted per user — Validated in Phase 10 (2026-05-07)
 - [x] Typography, spacing, and colour palette are consistent across all admin pages — Validated in Phase 10 (2026-05-07)
-- [ ] Tables and cards show loading skeletons instead of spinners while data loads
-- [ ] All pages with no data show friendly empty state messages or illustrations
-- [ ] All success/error actions use sonner toast notifications (no alert() or browser dialogs)
+- [x] Tables and cards show loading skeletons instead of spinners while data loads — Validated in Phase 11 (2026-05-07)
+- [x] All pages with no data show friendly empty state messages or illustrations — Validated in Phase 11 (2026-05-07)
+- [x] All success/error actions use sonner toast notifications (no alert() or browser dialogs) — Validated in Phase 11 (2026-05-07)
 - [ ] Owner can download a PDF summary of a candidate's submission results
 - [ ] Dashboard stats and charts can be filtered by test config and date range
 - [x] Admin panel is usable on tablet-sized screens — Validated in Phase 10 (2026-05-07)
@@ -94,4 +94,4 @@ All 24 v1 requirements — see [milestones/v1.0-REQUIREMENTS.md](milestones/v1.0
 This document evolves at phase transitions and milestone boundaries.
 
 ---
-*Last updated: 2026-05-07 — Phase 10 complete (Admin Visual Foundation — THEME-01, UI-01, RESP-01 ✓); Phase 11 next (UX Pattern Library)*
+*Last updated: 2026-05-07 — Phase 11 complete (UX Pattern Library — UI-02, UI-03, UI-04 ✓); Phase 12 next (Reporting & Dashboard Filters)*
