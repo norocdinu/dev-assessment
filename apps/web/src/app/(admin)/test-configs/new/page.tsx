@@ -13,7 +13,7 @@ export default function NewTestConfigPage() {
     technology_id: '',
     difficulty: 'mid',
     num_questions: 20,
-    pass_threshold_pct: 70,
+    pass_threshold_pct: 80,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [warning, setWarning] = useState('');
