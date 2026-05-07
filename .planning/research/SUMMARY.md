@@ -1,75 +1,93 @@
-# Research Summary — Dev Assessment Platform
+# Research Summary — v1.1 First Iteration
 
-## Stack
-
-**Go-to 2025 stack:**
-- **Frontend**: React 18 + Next.js 14 + TypeScript
-- **Backend**: Node.js (Express/Fastify) + TypeScript
-- **Database**: PostgreSQL (primary) + Redis (sessions, cache, rate limiting)
-- **Grading queue**: Bull (Redis-backed) for async auto-grading
-- **Dashboard charts**: Recharts or Apache ECharts + TanStack Table
-
-Key library picks:
-- `seedrandom` — deterministic seeded RNG for reproducible question selection
-- `date-fns` — timer/timestamp utilities
-- `jsPDF` + `XLSX` — export results to PDF/CSV
-
-**Confidence: 92%**
+**Synthesized:** 2026-05-07
+**Sources:** STACK.md, FEATURES.md, ARCHITECTURE.md, PITFALLS.md
 
 ---
 
-## Table Stakes Features
+## Stack Additions
 
-Must have or users leave:
-- Shareable pre-configured links (no candidate login)
-- Auto-grading with instant results
-- Score + pass/fail verdict
-- Skill-area breakdown (score per topic)
-- Full answer sheet (candidate answer vs correct answer)
-- Question randomisation (shuffle per candidate)
-- 30-min timer with auto-submit
-- Question bank CRUD + tagging + search
-- Multi-admin with roles + audit trail
-- Bulk question import (CSV/JSON)
-- Cross-candidate comparison dashboard
-- Export results (PDF / CSV)
+**Charting:** Recharts already installed (`^2.12.7`) — upgrade to `v3.8.1`. Add shadcn/ui chart components (copy-paste, no npm install). Both require `"use client"` + `dynamic(..., { ssr: false })` in Next.js 14 App Router.
+
+**Account management / password form:** No new libraries — existing Fastify + postgres + zod stack covers it.
+
+**CSV fix:** Bug fix only, no new libraries.
 
 ---
 
-## Architecture Decisions
+## Feature Decisions
 
-**Seeded RNG** (critical): Use `hash(test_id + link_token)` as seed → same link always yields same question set. No need to persist the selection. Use `crypto.getRandomValues()` or `seedrandom`, never `Math.random()`.
+### Dashboard
+- **Chart set:** Score histogram (BarChart, 10% bands + pass threshold reference line) + Competency horizontal BarChart (avg % per skill-area tag) + Tailwind KPI cards (no chart library needed)
+- **Recent candidates:** Last 10 submissions — candidate name, test config, score, pass/fail, date
+- **Anti-features:** No radar charts, no time-series trends, no drilldown complexity
 
-**Hybrid timer**: Client-side countdown for UX, server-side hard cutoff for enforcement. Server stores `started_at`; any submission received after `started_at + 1800s` is rejected. Use Web Worker so tab-switch doesn't pause timer.
+### Member Role
+- **Can:** Generate/revoke test links, view all submissions, export CSV, view question bank (read-only)
+- **Cannot:** Add/edit/delete questions, manage test configs, manage accounts, delete submissions
+- `requireRole` already accepts varargs — relax link generation from `'owner'` to `'owner', 'member'`
 
-**Denormalised results cache**: After grading, pre-compute and store category breakdowns in a `results_cache` table. Dashboard reads cache — no expensive real-time aggregation.
+### Account Settings (self-service)
+- Display name (editable), email (read-only), change password (requires current password)
+- Defer: avatar, timezone, 2FA
 
-**Question versioning**: Questions are immutable once submitted against. Edits create new versions. Past submissions link to the version that was live at submission time.
+### Account Management (Owner only)
+- Create: name, email, role (owner/member/reviewer), temporary password
+- Edit: name and role
+- Delete: blocked if last owner (server-side guard)
 
-**No candidate auth**: Candidate identity = hashed email/name + submission ID. Zero friction — click link, start test.
+### Submission Deletion
+- Hard delete in transaction: candidate_answers → submission_results → submission
+- Audit log before executing; owner-only; confirmation modal; returns 204
+- Dashboard stats update automatically (computed live)
 
 ---
 
-## Watch Out For
+## Architecture Impact
 
-1. **Client-only timer** — trivially bypassed via DevTools. Server must enforce hard cutoff.
-2. **`Math.random()` without seeding** — non-deterministic; same link shows different questions on refresh.
-3. **In-place question edits** — breaks historical results. Always version.
-4. **Race conditions on submit** — use idempotency keys + `UNIQUE (test_id, submission_id)` DB constraint.
-5. **One-use vs reusable links** — decide upfront: reusable links with seeded RNG are simpler to manage for live interviews; single-use tokens add security but complexity.
-6. **Pool exhaustion** — maintain ≥3× more questions than the test draws, per level.
-7. **N+1 queries on dashboard** — pre-aggregate into results_cache; never query per-submission in a loop.
+### DB Changes Required
+1. Widen `admin_users.role` CHECK constraint to include `'member'` (DROP + re-ADD)
+2. Add `candidate_name TEXT` column to `test_links`
+3. New migration file required
+
+### CSV Fix — Root Cause Confirmed
+Export emits technology **display name** (`"Power BI"`); importer expects **slug** (`power-bi`). Fix: change export query to select `t.slug`. Also add `explanation` column to make round-trip lossless.
+
+### New API Endpoints
+| Method | Path | Role | Purpose |
+|--------|------|------|---------|
+| GET | /dashboard/stats | any auth | Cross-config KPIs + recent candidates |
+| GET | /dashboard/competency | any auth | Avg score per skill area |
+| GET | /admin/accounts | owner | List all admin accounts |
+| POST | /admin/accounts | owner | Create new admin account |
+| PUT | /admin/accounts/:id | owner | Update name/role |
+| DELETE | /admin/accounts/:id | owner | Delete account (last-owner guard) |
+| PUT | /auth/me | any auth | Change own password |
+| DELETE | /submissions/:id | owner | Hard-delete submission |
+
+### New Frontend Pages
+- `/admin/dashboard` — analytics overview
+- `/admin/accounts` — account list (owner only, sidebar link gated)
+- `/admin/accounts/new` — create account
+- `/admin/settings` — my account / change password
 
 ---
 
-## Build Order (Critical Path)
+## Key Pitfalls
 
-1. DB schema + migrations
-2. Seeded RNG library + tests
-3. Admin auth + question bank CMS
-4. Test config + sharelink generation
-5. Candidate portal (timer, MCQ UI, submission)
-6. Auto-grading engine + results cache
-7. Results views (candidate + admin)
-8. Admin comparison dashboard + analytics
-9. Bulk import, PDF export, polish
+1. **DB constraint:** `CHECK (role IN ('owner', 'reviewer'))` hard-rejects Member inserts — migration mandatory before any account creation
+2. **Shared type:** `AdminUser.role` in `packages/shared/types/index.ts` needs `'member'` added or TypeScript guards silently miss it
+3. **RBAC audit:** 6 existing endpoints use only `authMiddleware` — confirm each endpoint's intended access level before adding Member role
+4. **Chart SSR:** Wrap chart components in `dynamic(() => import(...), { ssr: false })` — Recharts causes hydration mismatches without it
+5. **CSV multiline:** Fix `split('\n')` before `parseCsvLine` — it breaks quoted fields with embedded newlines
+6. **Deletion → broken compare URLs:** Gracefully handle 404 on `/admin/compare` when a referenced submission is deleted
+7. **JWT no revocation:** Role changes take effect only after token expiry (8h) — acceptable for v1.1
+
+---
+
+## Suggested Build Order
+
+1. **DB migration + shared types** — prerequisite for everything
+2. **CSV import fix** — isolated, zero-risk, high user value
+3. **Backend endpoints** — dashboard stats, account CRUD, submission delete, PUT /auth/me
+4. **Frontend pages** — dashboard, accounts, settings (depends on backend)
