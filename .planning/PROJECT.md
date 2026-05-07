@@ -8,15 +8,21 @@ A web-based multi-technology candidate assessment platform for technical hiring.
 
 A candidate receives a link and gets a fair, repeatable, automatically-graded test — every time, for any technology, at any seniority level.
 
-## Current State — v1.0 Shipped (2026-05-07)
+## Current Milestone: v1.1 — First Iteration
 
-All 24 v1 requirements delivered across 5 phases in 17 days. Platform is live and supports:
-- Multi-admin question bank management (Owner + Reviewer RBAC)
-- Multiple technologies and 3 seniority levels per technology
-- Zero-friction candidate experience: link → timed test → auto-submit → instant results
-- Full admin dashboard: paginated submissions list, side-by-side candidate comparison, aggregate stats
-- CSV import/export, bulk operations, server-side pagination throughout
+**Goal:** Polish the platform for real team use — fix rough edges, add a proper analytics dashboard, and expand account management.
 
+**Target features:**
+- CSV import round-trip fix — exported CSV imports cleanly without errors
+- Submission deletion — owners can delete test submissions
+- Test config UX — rename link "Name" to "Candidate Name", default pass threshold 80%
+- Comprehensive dashboard — recent candidates list, overall score chart, competency breakdown charts, KPIs
+- Account settings page — clickable admin info (bottom-left) → change password
+- Multi-account management — add/manage accounts; new Member role (generate links + view results; cannot manage questions or delete submissions)
+
+## Previous: v1.0 Shipped (2026-05-07)
+
+All 24 v1 requirements delivered across 5 phases in 17 days.
 See [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full archive.
 
 ## Requirements
@@ -25,13 +31,15 @@ See [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full archive.
 
 All 24 v1 requirements — see [milestones/v1.0-REQUIREMENTS.md](milestones/v1.0-REQUIREMENTS.md)
 
-### Active (v2)
+### Active (v1.1)
 
-- [ ] PDF export of individual candidate results
-- [ ] AI-assisted question generation
-- [ ] Question effectiveness analytics (difficulty index, discrimination index per question)
-- [ ] Candidate email notifications
-- [ ] Webhook / ATS integration
+- [ ] CSV import accepts files exported from the system without errors
+- [ ] Owner can delete a test submission (removes from dashboard and reports)
+- [ ] Test config link creation uses "Candidate Name" label with 80% pass default
+- [ ] Dashboard shows recent candidates list, score distribution chart, competency breakdown, and KPI summary
+- [ ] Admin can open an account settings page and change their password
+- [ ] Owner can create and manage admin accounts with Owner, Member, or Reviewer roles
+- [ ] Member role can generate test links and view results but cannot manage questions or delete submissions
 
 ### Out of Scope
 
@@ -72,7 +80,5 @@ All 24 v1 requirements — see [milestones/v1.0-REQUIREMENTS.md](milestones/v1.0
 
 This document evolves at phase transitions and milestone boundaries.
 
-**Next milestone** starts with `/gsd-new-milestone` — define v2 requirements from the candidate list above.
-
 ---
-*Last updated: 2026-05-07 after v1.0 milestone close*
+*Last updated: 2026-05-07 after v1.1 milestone start*
