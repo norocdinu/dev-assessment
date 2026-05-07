@@ -343,14 +343,14 @@ export default function QuestionsPage() {
           placeholder="Skill area..."
           value={skillArea}
           onChange={(e) => setSkillArea(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+          className="px-3 py-2 border border-border rounded-md text-sm"
         />
         <input
           type="text"
           placeholder="Search questions..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm flex-1 min-w-40"
+          className="px-3 py-2 border border-border rounded-md text-sm flex-1 min-w-40"
         />
         <label className="flex items-center gap-2 text-sm text-foreground/70">
           <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />

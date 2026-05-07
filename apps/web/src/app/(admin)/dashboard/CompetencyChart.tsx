@@ -21,7 +21,7 @@ interface Props {
 export default function CompetencyChart({ data }: Props) {
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-48 text-sm text-gray-400">
+      <div className="flex items-center justify-center h-48 text-sm text-muted/70">
         No competency data yet
       </div>
     );
