@@ -8,15 +8,16 @@ import { deriveSeed } from '../lib/rng.js';
 
 const createSchema = z.object({
   test_config_id: z.string().uuid(),
+  candidate_name: z.string().optional(),
 });
 
 export async function testLinkRoutes(app: FastifyInstance) {
-  // POST /admin/test-links — generate a new link (owner only)
-  app.post('/', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
+  // POST /admin/test-links — generate a new link (owner or member)
+  app.post('/', { preHandler: [authMiddleware, requireRole('owner', 'member')] }, async (request, reply) => {
     const body = createSchema.safeParse(request.body);
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() });
 
-    const { test_config_id } = body.data;
+    const { test_config_id, candidate_name } = body.data;
 
     const [config] = await db`
       SELECT id FROM test_configs WHERE id = ${test_config_id} AND is_active = TRUE
@@ -27,9 +28,9 @@ export async function testLinkRoutes(app: FastifyInstance) {
     const seed = deriveSeed(test_config_id, token);
 
     const [link] = await db`
-      INSERT INTO test_links (test_config_id, token, seed, expires_at, created_by)
-      VALUES (${test_config_id}, ${token}, ${seed}, NULL, ${(request as any).user.id})
-      RETURNING id, token, state, created_at
+      INSERT INTO test_links (test_config_id, token, seed, expires_at, created_by, candidate_name)
+      VALUES (${test_config_id}, ${token}, ${seed}, NULL, ${(request as any).user.id}, ${candidate_name ?? null})
+      RETURNING id, token, state, candidate_name, created_at
     `;
 
     const url = `${process.env.WEB_URL ?? 'http://localhost:3000'}/test/${token}`;
@@ -47,7 +48,7 @@ export async function testLinkRoutes(app: FastifyInstance) {
     if (!config) return reply.status(404).send({ error: 'Test config not found' });
 
     const links = await db`
-      SELECT id, token, state, expires_at, started_at, submitted_at, created_at
+      SELECT id, token, state, candidate_name, expires_at, started_at, submitted_at, created_at
       FROM test_links
       WHERE test_config_id = ${testConfigId}
       ORDER BY created_at DESC
