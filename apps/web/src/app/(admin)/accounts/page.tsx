@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/DataTable';
 import { api } from '@/lib/api';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Users } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface AdminAccount {
   id: string;
@@ -25,6 +29,7 @@ export default function AccountsPage() {
   const [accounts, setAccounts] = useState<AdminAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAccounts();
@@ -43,10 +48,15 @@ export default function AccountsPage() {
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Delete this account? This action cannot be undone.')) return;
+  function requestDelete(id: string) {
+    setConfirmDeleteId(id);
+  }
+
+  async function executeDelete(id: string) {
+    setConfirmDeleteId(null);
     try {
       await api.delete(`/admin/accounts/${id}`);
+      toast.success('Account deleted');
       fetchAccounts();
     } catch (err: unknown) {
       const axiosErr = err as { response?: { status?: number; data?: { error?: string } } };
@@ -54,7 +64,7 @@ export default function AccountsPage() {
         const msg = axiosErr.response?.data?.error ?? 'Cannot delete account.';
         setError(msg);
       } else {
-        setError('Failed to delete account.');
+        toast.error('Failed to delete account');
       }
     }
   }
@@ -97,7 +107,7 @@ export default function AccountsPage() {
             Edit
           </button>
           <button
-            onClick={() => handleDelete(row.original.id)}
+            onClick={() => requestDelete(row.original.id)}
             className="text-red-600 hover:underline text-xs"
           >
             Delete
@@ -106,14 +116,6 @@ export default function AccountsPage() {
       ),
     } as ColumnDef<AdminAccount>,
   ];
-
-  if (loading) {
-    return (
-      <div className="p-6">
-        <p className="text-sm text-muted/70">Loading…</p>
-      </div>
-    );
-  }
 
   return (
     <div className="p-6">
@@ -129,7 +131,33 @@ export default function AccountsPage() {
 
       {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 
-      <DataTable columns={columns} data={accounts} />
+      <DataTable columns={columns} data={accounts} loading={loading} />
+
+      {!loading && accounts.length === 0 && (
+        <EmptyState
+          icon={<Users className="h-10 w-10" />}
+          title="No accounts yet"
+          description="Create the first team account to get started."
+          action={
+            <button
+              onClick={() => router.push('/accounts/new')}
+              className="px-4 py-2 bg-[var(--brand)] text-white text-sm rounded-md hover:bg-[var(--brand)]/90"
+            >
+              Create Account
+            </button>
+          }
+        />
+      )}
+
+      <ConfirmDialog
+        open={confirmDeleteId !== null}
+        title="Delete account?"
+        description="This permanently removes the account and cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => confirmDeleteId && executeDelete(confirmDeleteId)}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 }
