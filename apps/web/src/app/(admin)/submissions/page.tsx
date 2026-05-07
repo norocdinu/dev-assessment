@@ -151,7 +151,7 @@ export default function SubmissionsPage() {
           type="checkbox"
           checked={selectedIds.has(row.original.link_id)}
           onChange={() => toggleSelect(row.original.link_id)}
-          className="rounded border-gray-300"
+          className="rounded border-border"
         />
       ),
     },
@@ -159,7 +159,7 @@ export default function SubmissionsPage() {
       header: ({ column }) => (
         <button
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="flex items-center gap-1 font-medium text-gray-600 hover:text-gray-900"
+          className="flex items-center gap-1 font-medium text-foreground/70 hover:text-foreground"
         >
           Score {column.getIsSorted() === 'asc' ? '↑' : column.getIsSorted() === 'desc' ? '↓' : '↕'}
         </button>
@@ -180,7 +180,7 @@ export default function SubmissionsPage() {
       header: 'Test',
       accessorKey: 'test_name',
       cell: ({ row }) => (
-        <span className="text-sm">{row.original.test_name} <span className="text-gray-400 capitalize">— {row.original.difficulty}</span></span>
+        <span className="text-sm">{row.original.test_name} <span className="text-muted/70 capitalize">— {row.original.difficulty}</span></span>
       ),
     },
     {
@@ -192,7 +192,7 @@ export default function SubmissionsPage() {
       header: ({ column }) => (
         <button
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="flex items-center gap-1 font-medium text-gray-600 hover:text-gray-900"
+          className="flex items-center gap-1 font-medium text-foreground/70 hover:text-foreground"
         >
           Submitted {column.getIsSorted() === 'asc' ? '↑' : column.getIsSorted() === 'desc' ? '↓' : '↕'}
         </button>
@@ -206,7 +206,7 @@ export default function SubmissionsPage() {
       cell: ({ row }: { row: Row<SubmissionListRow> }) => (
         <button
           onClick={() => router.push(`/submissions/${row.original.link_id}`)}
-          className="text-blue-600 hover:underline text-xs"
+          className="text-[var(--brand)] hover:underline text-xs"
         >
           View result
         </button>
@@ -235,7 +235,7 @@ export default function SubmissionsPage() {
     <div className="p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Submissions</h2>
+        <h2 className="text-lg font-semibold text-foreground">Submissions</h2>
         <div className="flex gap-2">
           {filterTestConfigId && (
             <button
@@ -249,13 +249,13 @@ export default function SubmissionsPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="flex flex-wrap gap-3 mb-4 p-4 bg-white border border-gray-200 rounded-lg">
+      <div className="flex flex-wrap gap-3 mb-4 p-4 bg-card border border-border rounded-lg">
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Test config</label>
+          <label className="block text-xs text-muted mb-1">Test config</label>
           <select
             value={filterTestConfigId}
             onChange={e => setFilterTestConfigId(e.target.value)}
-            className="text-sm border border-gray-300 rounded-md px-2 py-1"
+            className="text-sm border border-border rounded-md px-2 py-1"
           >
             <option value="">All tests</option>
             {testConfigs.map(tc => (
@@ -264,29 +264,29 @@ export default function SubmissionsPage() {
           </select>
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">From</label>
+          <label className="block text-xs text-muted mb-1">From</label>
           <input
             type="date"
             value={filterDateFrom}
             onChange={e => setFilterDateFrom(e.target.value)}
-            className="text-sm border border-gray-300 rounded-md px-2 py-1"
+            className="text-sm border border-border rounded-md px-2 py-1"
           />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">To</label>
+          <label className="block text-xs text-muted mb-1">To</label>
           <input
             type="date"
             value={filterDateTo}
             onChange={e => setFilterDateTo(e.target.value)}
-            className="text-sm border border-gray-300 rounded-md px-2 py-1"
+            className="text-sm border border-border rounded-md px-2 py-1"
           />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Difficulty</label>
+          <label className="block text-xs text-muted mb-1">Difficulty</label>
           <select
             value={filterDifficulty}
             onChange={e => setFilterDifficulty(e.target.value)}
-            className="text-sm border border-gray-300 rounded-md px-2 py-1 capitalize"
+            className="text-sm border border-border rounded-md px-2 py-1 capitalize"
           >
             <option value="">Any</option>
             <option value="junior">Junior</option>
@@ -297,13 +297,13 @@ export default function SubmissionsPage() {
         <div className="flex items-end gap-2">
           <button
             onClick={applyFilters}
-            className="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+            className="px-4 py-1.5 bg-[var(--brand)] text-white text-sm rounded-md hover:bg-[var(--brand)]/90"
           >
             Apply
           </button>
           <button
             onClick={clearFilters}
-            className="px-4 py-1.5 text-gray-600 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-4 py-1.5 text-foreground/70 text-sm border border-border rounded-md hover:bg-muted/10"
           >
             Clear
           </button>
@@ -312,37 +312,37 @@ export default function SubmissionsPage() {
 
       {/* Aggregate stats panel */}
       {filterTestConfigId && (
-        <div className="mb-4 p-4 bg-white border border-gray-200 rounded-lg">
+        <div className="mb-4 p-4 bg-card border border-border rounded-lg">
           {statsLoading ? (
-            <p className="text-sm text-gray-400">Loading stats…</p>
+            <p className="text-sm text-muted/70">Loading stats…</p>
           ) : stats ? (
             <div>
               <div className="flex gap-8 mb-4">
                 <div>
-                  <div className="text-2xl font-semibold text-gray-900">{stats.total_submissions}</div>
-                  <div className="text-xs text-gray-500">Total submissions</div>
+                  <div className="text-2xl font-semibold text-foreground">{stats.total_submissions}</div>
+                  <div className="text-xs text-muted">Total submissions</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-semibold text-gray-900">{stats.avg_score_pct}%</div>
-                  <div className="text-xs text-gray-500">Average score</div>
+                  <div className="text-2xl font-semibold text-foreground">{stats.avg_score_pct}%</div>
+                  <div className="text-xs text-muted">Average score</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-semibold text-gray-900">{stats.pass_rate_pct}%</div>
-                  <div className="text-xs text-gray-500">Pass rate</div>
+                  <div className="text-2xl font-semibold text-foreground">{stats.pass_rate_pct}%</div>
+                  <div className="text-xs text-muted">Pass rate</div>
                 </div>
               </div>
-              <div className="text-xs font-medium text-gray-500 mb-2">Score distribution</div>
+              <div className="text-xs font-medium text-muted mb-2">Score distribution</div>
               <div className="space-y-1">
                 {BUCKETS.map(({ label, key }) => {
                   const count = stats[key] as number;
                   const pct = Math.round((count / maxBucket) * 100);
                   return (
                     <div key={key} className="flex items-center gap-2 text-xs">
-                      <span className="w-14 text-right text-gray-500">{label}</span>
-                      <div className="flex-1 h-4 bg-gray-100 rounded overflow-hidden">
-                        <div className="h-full bg-blue-500 rounded" style={{ width: `${pct}%` }} />
+                      <span className="w-14 text-right text-muted">{label}</span>
+                      <div className="flex-1 h-4 bg-muted/20 rounded overflow-hidden">
+                        <div className="h-full bg-[var(--brand)]/80 rounded" style={{ width: `${pct}%` }} />
                       </div>
-                      <span className="w-6 text-gray-600">{count}</span>
+                      <span className="w-6 text-foreground/70">{count}</span>
                     </div>
                   );
                 })}
@@ -354,16 +354,16 @@ export default function SubmissionsPage() {
 
       {/* Table */}
       {loading ? (
-        <p className="text-sm text-gray-400">Loading…</p>
+        <p className="text-sm text-muted/70">Loading…</p>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted/10 border-b border-border">
                 {table.getHeaderGroups().map(hg => (
                   <tr key={hg.id}>
                     {hg.headers.map(header => (
-                      <th key={header.id} className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">
+                      <th key={header.id} className="px-4 py-3 text-left font-medium text-foreground/70 whitespace-nowrap">
                         {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                       </th>
                     ))}
@@ -372,9 +372,9 @@ export default function SubmissionsPage() {
               </thead>
               <tbody>
                 {table.getRowModel().rows.map((row, i) => (
-                  <tr key={row.id} className={`border-b border-gray-100 hover:bg-blue-50 transition-colors ${i % 2 === 1 ? 'bg-gray-50/50' : 'bg-white'}`}>
+                  <tr key={row.id} className={`border-b border-border/50 hover:bg-[rgb(var(--brand-rgb))]/10 transition-colors ${i % 2 === 1 ? 'bg-muted/5' : 'bg-card'}`}>
                     {row.getVisibleCells().map(cell => (
-                      <td key={cell.id} className="px-4 py-3 text-gray-700">
+                      <td key={cell.id} className="px-4 py-3 text-foreground/80">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
@@ -382,7 +382,7 @@ export default function SubmissionsPage() {
                 ))}
                 {table.getRowModel().rows.length === 0 && (
                   <tr>
-                    <td colSpan={columns.length} className="px-4 py-8 text-center text-gray-400">
+                    <td colSpan={columns.length} className="px-4 py-8 text-center text-muted/70">
                       No submissions found
                     </td>
                   </tr>
@@ -395,7 +395,7 @@ export default function SubmissionsPage() {
 
       {/* Pagination */}
       {!loading && total > 0 && (
-        <div className="flex items-center justify-between px-4 py-3 mt-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600">
+        <div className="flex items-center justify-between px-4 py-3 mt-2 bg-card border border-border rounded-lg text-sm text-foreground/70">
           <span>
             Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}
           </span>
@@ -403,14 +403,14 @@ export default function SubmissionsPage() {
             <button
               onClick={() => handlePageChange(page - 1)}
               disabled={page <= 1}
-              className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+              className="px-3 py-1 border border-border rounded-md disabled:opacity-40 hover:bg-muted/10"
             >
               Prev
             </button>
             <button
               onClick={() => handlePageChange(page + 1)}
               disabled={page * PAGE_SIZE >= total}
-              className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+              className="px-3 py-1 border border-border rounded-md disabled:opacity-40 hover:bg-muted/10"
             >
               Next
             </button>
@@ -420,11 +420,11 @@ export default function SubmissionsPage() {
 
       {/* Comparison sticky footer */}
       {selectedIds.size >= 2 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 flex items-center justify-between shadow-lg">
-          <span className="text-sm text-gray-600">{selectedIds.size} candidates selected</span>
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-6 py-3 flex items-center justify-between shadow-lg">
+          <span className="text-sm text-foreground/70">{selectedIds.size} candidates selected</span>
           <button
             onClick={handleCompare}
-            className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+            className="px-4 py-2 bg-[var(--brand)] text-white text-sm rounded-md hover:bg-[var(--brand)]/90"
           >
             Compare selected ({selectedIds.size})
           </button>

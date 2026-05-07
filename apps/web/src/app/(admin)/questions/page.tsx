@@ -214,7 +214,7 @@ export default function QuestionsPage() {
           type="checkbox"
           checked={selectedIds.size === questions.length && questions.length > 0}
           onChange={toggleSelectAll}
-          className="rounded border-gray-300"
+          className="rounded border-border"
         />
       ),
       cell: ({ row }: { row: Row<QuestionRow> }) => (
@@ -222,7 +222,7 @@ export default function QuestionsPage() {
           type="checkbox"
           checked={selectedIds.has(row.original.family_id)}
           onChange={() => toggleSelect(row.original.family_id)}
-          className="rounded border-gray-300"
+          className="rounded border-border"
         />
       ),
     },
@@ -241,7 +241,7 @@ export default function QuestionsPage() {
     {
       header: 'Status',
       cell: ({ row }) => (
-        <span className={row.original.is_active ? 'text-green-600' : 'text-gray-400'}>
+        <span className={row.original.is_active ? 'text-green-600' : 'text-muted/70'}>
           {row.original.is_active ? 'Active' : 'Archived'}
         </span>
       ),
@@ -254,14 +254,14 @@ export default function QuestionsPage() {
             {isOwner && (
               <button
                 onClick={() => router.push(`/questions/${row.original.family_id}/edit`)}
-                className="text-blue-600 hover:underline text-xs"
+                className="text-[var(--brand)] hover:underline text-xs"
               >
                 Edit
               </button>
             )}
             <button
               onClick={() => handleHistory(row.original.family_id)}
-              className="text-gray-600 hover:underline text-xs"
+              className="text-foreground/70 hover:underline text-xs"
             >
               History
             </button>
@@ -293,22 +293,22 @@ export default function QuestionsPage() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Question Bank</h2>
+        <h2 className="text-lg font-semibold text-foreground">Question Bank</h2>
         {isOwner && (
           <div className="flex gap-2">
             <button
               onClick={handleExport}
-              className="px-4 py-2 text-sm rounded-md border text-gray-700 border-gray-300 hover:bg-gray-50"
+              className="px-4 py-2 text-sm rounded-md border text-foreground/80 border-border hover:bg-muted/10"
             >
               Export CSV
             </button>
-            <label className={`px-4 py-2 text-sm rounded-md border cursor-pointer ${importing ? 'text-gray-400 border-gray-200' : 'text-gray-700 border-gray-300 hover:bg-gray-50'}`}>
+            <label className={`px-4 py-2 text-sm rounded-md border cursor-pointer ${importing ? 'text-muted/70 border-border/50' : 'text-foreground/80 border-border hover:bg-muted/10'}`}>
               {importing ? 'Importing…' : 'Import CSV'}
               <input type="file" accept=".csv" className="hidden" disabled={importing} onChange={handleImport} />
             </label>
             <button
               onClick={() => router.push('/questions/new')}
-              className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+              className="px-4 py-2 bg-[var(--brand)] text-white text-sm rounded-md hover:bg-[var(--brand)]/90"
             >
               New Question
             </button>
@@ -321,7 +321,7 @@ export default function QuestionsPage() {
         <select
           value={technology}
           onChange={(e) => setTechnology(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+          className="px-3 py-2 border border-border rounded-md text-sm"
         >
           <option value="">All Technologies</option>
           {technologies.map((t) => (
@@ -331,7 +331,7 @@ export default function QuestionsPage() {
         <select
           value={difficulty}
           onChange={(e) => setDifficulty(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+          className="px-3 py-2 border border-border rounded-md text-sm"
         >
           <option value="">All Levels</option>
           <option value="junior">Junior</option>
@@ -352,7 +352,7 @@ export default function QuestionsPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md text-sm flex-1 min-w-40"
         />
-        <label className="flex items-center gap-2 text-sm text-gray-600">
+        <label className="flex items-center gap-2 text-sm text-foreground/70">
           <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
           Show archived
         </label>
@@ -360,34 +360,34 @@ export default function QuestionsPage() {
 
       {/* Import result */}
       {importResult && (
-        <div className="mb-4 p-4 bg-white border border-gray-200 rounded-lg">
-          <div className="text-sm font-medium text-gray-900 mb-2">
+        <div className="mb-4 p-4 bg-card border border-border rounded-lg">
+          <div className="text-sm font-medium text-foreground mb-2">
             Import complete: {importResult.imported} question{importResult.imported !== 1 ? 's' : ''} imported
             {importResult.errors.length > 0 && `, ${importResult.errors.length} error${importResult.errors.length !== 1 ? 's' : ''}`}
           </div>
           {importResult.errors.length > 0 && (
-            <table className="w-full text-xs border border-gray-200 rounded">
-              <thead className="bg-gray-50">
+            <table className="w-full text-xs border border-border rounded">
+              <thead className="bg-muted/10">
                 <tr>
-                  <th className="px-3 py-2 text-left text-gray-600">Row</th>
-                  <th className="px-3 py-2 text-left text-gray-600">Reason</th>
+                  <th className="px-3 py-2 text-left text-foreground/70">Row</th>
+                  <th className="px-3 py-2 text-left text-foreground/70">Reason</th>
                 </tr>
               </thead>
               <tbody>
                 {importResult.errors.map((e, i) => (
-                  <tr key={i} className="border-t border-gray-100">
-                    <td className="px-3 py-2 text-gray-700">{e.row || '—'}</td>
+                  <tr key={i} className="border-t border-border/50">
+                    <td className="px-3 py-2 text-foreground/80">{e.row || '—'}</td>
                     <td className="px-3 py-2 text-red-600">{e.reason}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
-          <button onClick={() => setImportResult(null)} className="mt-2 text-xs text-gray-400 hover:underline">Dismiss</button>
+          <button onClick={() => setImportResult(null)} className="mt-2 text-xs text-muted/70 hover:underline">Dismiss</button>
         </div>
       )}
 
-      <p className="text-sm text-gray-500 mb-2">
+      <p className="text-sm text-muted mb-2">
         {loading ? 'Loading...' : `${total} question${total !== 1 ? 's' : ''} total`}
       </p>
 
@@ -412,8 +412,8 @@ export default function QuestionsPage() {
 
       {/* Bulk action floating bar */}
       {selectedIds.size >= 1 && isOwner && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 flex items-center justify-between shadow-lg">
-          <span className="text-sm text-gray-600">{selectedIds.size} question{selectedIds.size !== 1 ? 's' : ''} selected</span>
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-6 py-3 flex items-center justify-between shadow-lg">
+          <span className="text-sm text-foreground/70">{selectedIds.size} question{selectedIds.size !== 1 ? 's' : ''} selected</span>
           <div className="flex gap-2">
             <button
               onClick={handleBulkArchive}
@@ -434,18 +434,18 @@ export default function QuestionsPage() {
       {/* History Modal */}
       {historyModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setHistoryModal(null)}>
-          <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-semibold text-gray-900 mb-4">Version History</h3>
+          <div className="bg-card rounded-lg p-6 max-w-lg w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-semibold text-foreground mb-4">Version History</h3>
             <div className="space-y-2">
               {historyModal.map((q) => (
-                <div key={q.id} className="border border-gray-200 rounded p-3 text-sm">
+                <div key={q.id} className="border border-border rounded p-3 text-sm">
                   <div className="font-medium">v{q.version} {q.is_latest ? '(current)' : ''}</div>
-                  <div className="text-gray-600 mt-1">{q.text}</div>
-                  <div className="text-xs text-gray-400 mt-1">{new Date(q.created_at).toLocaleString()}</div>
+                  <div className="text-foreground/70 mt-1">{q.text}</div>
+                  <div className="text-xs text-muted/70 mt-1">{new Date(q.created_at).toLocaleString()}</div>
                 </div>
               ))}
             </div>
-            <button onClick={() => setHistoryModal(null)} className="mt-4 text-sm text-gray-600 hover:underline">Close</button>
+            <button onClick={() => setHistoryModal(null)} className="mt-4 text-sm text-foreground/70 hover:underline">Close</button>
           </div>
         </div>
       )}
