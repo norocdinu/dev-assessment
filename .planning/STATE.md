@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: First Iteration
-status: planning
+status: ready
 last_updated: "2026-05-07T00:00:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
-  total_plans: 0
+  total_plans: 7
   completed_plans: 0
   percent: 0
 ---
@@ -20,41 +20,37 @@ See: .planning/PROJECT.md (updated 2026-05-07)
 
 **Core value:** A candidate receives a link and gets a fair, repeatable, automatically-graded test — every time, for any technology, at any seniority level.
 
-**Current focus:** v1.1 — First Iteration (defining requirements and roadmap)
+**Current focus:** v1.1 — First Iteration (ready to execute Phase 6)
 
 ## Current Position
 
-- **Status**: Defining requirements
-- **Phase**: Not started
+- **Status**: Ready to execute
+- **Phase**: Phase 6 — Foundation & Fixes (not started)
 - **Plan**: —
-- **Last activity**: 2026-05-07 — Milestone v1.1 started
+- **Last activity**: 2026-05-07 — Roadmap created, milestone v1.1 initialized
 
 ## Progress
 
 | Phase | Status | Plans | Notes |
 |-------|--------|-------|-------|
-| (phases to be defined) | ○ | — | — |
+| Phase 6 — Foundation & Fixes | ○ Pending | 2 | DB migration, CSV fix |
+| Phase 7 — Team Management & UX Polish | ○ Pending | 2 | Account CRUD, Member role, settings, test config UX |
+| Phase 8 — Analytics Dashboard | ○ Pending | 2 | Dashboard, charts, submission delete |
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 - v1.0 shipped 2026-05-07: 5 phases, 22 plans, 24 requirements
-- v1.1 started 2026-05-07: polish + analytics dashboard + account management
+- v1.1 started 2026-05-07: 3 phases, 7 plans, 12 requirements
 
-### v1.1 Scope (confirmed 2026-05-07)
-- CSV import round-trip fix (bug: exported CSV fails to re-import)
-- Submission deletion (owner-only)
-- Test config UX: "Candidate Name" label, 80% pass default
-- Comprehensive dashboard: recent candidates, score charts, competency breakdown, KPIs
-- Account settings page: clickable bottom-left → change password
-- Multi-account management: new Member role + account CRUD
+### v1.1 Key Decisions
+- CSV fix: export emits tech slug not display name; add explanation column; fix multiline split
+- Charts: Recharts v3.8.1 + shadcn/ui (already installed); dynamic import for SSR safety
+- Member role: new role in DB enum; can generate links + view results; cannot edit questions
+- Submission delete: hard delete in transaction; owner-only; audit logged before delete
+- Account management: owner creates accounts with temp password; no email invites
 
-## Key Decisions (carried from v1.0)
-
-- MCQ-only — validated sufficient for screening
-- No candidate auth — link-based, zero friction
-- Seeded RNG — same link = same questions always
-- Hybrid timer — client UI + server hard cutoff
-- PostgreSQL + Redis stack
-- React/Next.js frontend, Fastify backend
-- Owner + Reviewer RBAC (extending to add Member in v1.1)
+### Key Technical Risks
+- DB role CHECK constraint must be migrated before any Member account can be created (Phase 6 gate)
+- AdminUser.role shared type must include 'member' or TypeScript guards miss the new role
+- 6 existing endpoints have only authMiddleware — review each for intended Member access level
