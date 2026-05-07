@@ -32,7 +32,7 @@ export default function CompetencyChart({ data }: Props) {
       <BarChart layout="vertical" data={data} margin={{ top: 8, right: 24, left: 8, bottom: 0 }}>
         <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} unit="%" />
         <YAxis type="category" dataKey="area" tick={{ fontSize: 12 }} width={140} />
-        <Tooltip formatter={(value: number) => [`${value}%`, 'Avg Score']} />
+        <Tooltip formatter={(value) => [`${value}%`, 'Avg Score']} />
         <Bar dataKey="avgScore" fill="#8b5cf6" radius={[0, 3, 3, 0]} />
       </BarChart>
     </ResponsiveContainer>
