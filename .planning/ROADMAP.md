@@ -28,15 +28,15 @@
 
 ---
 
-## Phase 7 — Team Management & UX Polish
+## Phase 7 — Team Management & UX Polish ✓ Complete 2026-05-07
 
 **Goal**: Owners can manage the team with the new Member role; admins can update their own password; test config UX is clear and consistent.
 
 **Requirements**: ACCESS-05, ACCESS-06, ACCESS-07, ACCESS-08, TESTS-06, TESTS-07
 
 **Plans**:
-- 07-01: Backend — account CRUD routes, PUT /auth/me, Member RBAC (link generation relaxed to owner+member), submission delete endpoint
-- 07-02: Frontend — accounts list + create page, account settings page, sidebar clickable admin info, test config "Candidate Name" label + 80% pass default
+- [x] 07-01: Backend — account CRUD routes, PUT /auth/me, Member RBAC (link generation relaxed to owner+member), submission delete endpoint
+- [x] 07-02: Frontend — accounts list + create page, account settings page, sidebar clickable admin info, test config "Candidate Name" label + 80% pass default
 
 **Deliverables**:
 - `GET /admin/accounts` — owner-only; returns list of all admin users
