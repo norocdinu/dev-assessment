@@ -133,7 +133,7 @@ This phase redesigns the candidate test-taking experience: the main test page, r
 - ProgressBar: 3px tall, full width below header, smooth CSS transition as it fills
 - All `bg-gray-50` → `bg-background` CSS var; all `bg-white` → `bg-card` CSS var — enables dark mode swap
 - Option selection: use brand accent with 10% opacity background + solid border (instead of `bg-blue-50 border-blue-600` hardcoded)
-- shadcn/ui is already installed — use `cn()` utility for conditional classes; no new packages needed
+- shadcn/ui is NOT installed (admin uses plain Tailwind + TanStack Table) — no new packages needed; use plain `clsx` or template literals for conditional classes
 - CandidateThemeProvider: small client component that calls `window.matchMedia('(prefers-color-scheme: dark)')` and adds/removes `dark` class on `<html>`; add `onChange` listener for live switching
 
 </specifics>
