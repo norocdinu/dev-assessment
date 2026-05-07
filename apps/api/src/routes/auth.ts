@@ -9,6 +9,12 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+const updateMeSchema = z.object({
+  current_password: z.string().min(1),
+  new_password: z.string().min(8).optional(),
+  name: z.string().optional(),
+});
+
 export async function authRoutes(app: FastifyInstance) {
   app.post('/login', async (request, reply) => {
     const body = loginSchema.safeParse(request.body);
@@ -44,6 +50,34 @@ export async function authRoutes(app: FastifyInstance) {
   });
 
   app.get('/me', { preHandler: authMiddleware }, async (request, reply) => {
-    return { user: request.user };
+    const userId = (request as any).user.id;
+    const [user] = await db`SELECT id, email, name, role FROM admin_users WHERE id = ${userId}`;
+    if (!user) return reply.status(404).send({ error: 'User not found' });
+    return { user };
+  });
+
+  app.put('/me', { preHandler: authMiddleware }, async (request, reply) => {
+    const body = updateMeSchema.safeParse(request.body);
+    if (!body.success) return reply.status(400).send({ error: 'Invalid request body' });
+
+    const { current_password, new_password, name } = body.data;
+    const userId = (request as any).user.id;
+
+    const [user] = await db`SELECT password_hash FROM admin_users WHERE id = ${userId}`;
+    if (!user) return reply.status(404).send({ error: 'User not found' });
+
+    const valid = await bcrypt.compare(current_password, user.password_hash);
+    if (!valid) return reply.status(401).send({ error: 'Current password is incorrect' });
+
+    if (new_password) {
+      const newHash = await bcrypt.hash(new_password, 10);
+      await db`UPDATE admin_users SET password_hash = ${newHash} WHERE id = ${userId}`;
+    }
+
+    if (name !== undefined) {
+      await db`UPDATE admin_users SET name = ${name} WHERE id = ${userId}`;
+    }
+
+    return { ok: true };
   });
 }
