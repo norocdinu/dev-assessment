@@ -71,6 +71,42 @@ async function migrate() {
       console.log('Phase 3 schema already present — skipping DDL');
     }
 
+    // Phase 6: Member role CHECK constraint + candidate_name column on test_links
+    const [{ constraintAllowsMember }] = await db`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.check_constraints
+        WHERE constraint_schema = 'public'
+          AND constraint_name = 'admin_users_role_check'
+          AND check_clause LIKE '%member%'
+      ) AS "constraintAllowsMember"
+    `;
+
+    if (!constraintAllowsMember) {
+      console.log('Running Phase 6 migration: extending role CHECK constraint...');
+      await db`ALTER TABLE admin_users DROP CONSTRAINT IF EXISTS admin_users_role_check`;
+      await db`ALTER TABLE admin_users ADD CONSTRAINT admin_users_role_check CHECK (role IN ('owner', 'reviewer', 'member'))`;
+      console.log('Phase 6a: role constraint updated');
+    } else {
+      console.log('Phase 6a: role constraint already includes member — skipping');
+    }
+
+    const [{ candidateNameExists }] = await db`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'test_links'
+          AND column_name = 'candidate_name'
+      ) AS "candidateNameExists"
+    `;
+
+    if (!candidateNameExists) {
+      console.log('Running Phase 6 migration: adding candidate_name to test_links...');
+      await db`ALTER TABLE test_links ADD COLUMN candidate_name TEXT`;
+      console.log('Phase 6b: candidate_name column added');
+    } else {
+      console.log('Phase 6b: candidate_name column already present — skipping');
+    }
+
     // Always apply seed data
     const seedStart = schema.indexOf('-- Seed initial data');
     if (seedStart !== -1) {
