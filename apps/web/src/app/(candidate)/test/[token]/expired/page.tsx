@@ -3,22 +3,28 @@
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 
-const STATE_CONTENT: Record<string, { heading: string; body: string }> = {
+const BRAND_NAME = process.env.NEXT_PUBLIC_BRAND_NAME ?? 'Dev Assessment';
+
+const STATE_CONTENT: Record<string, { heading: string; body: string; icon: string }> = {
   expired: {
+    icon: '⏱',
     heading: 'This link has expired',
     body: 'Contact your interviewer for a new link.',
   },
   submitted: {
-    heading: 'Test submitted',
-    body: 'Your answers have been recorded. Results coming soon.',
+    icon: '✓',
+    heading: 'Already submitted',
+    body: 'Your answers have been recorded.',
   },
   notfound: {
+    icon: '✕',
     heading: 'Link not found',
     body: 'This link is invalid or has already been used.',
   },
   timelimit: {
+    icon: '⏱',
     heading: "Time's up",
-    body: 'Your test time has ended. Your progress has been submitted.',
+    body: 'Your test time has ended. Your answers have been submitted.',
   },
 };
 
@@ -28,10 +34,18 @@ function ExpiredContent() {
   const content = STATE_CONTENT[state] ?? STATE_CONTENT.notfound;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-8 max-w-md w-full mx-4 text-center">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-3">{content.heading}</h1>
-        <p className="text-sm text-gray-600">{content.body}</p>
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="px-6 py-4 border-b border-border">
+        <span className="text-base font-bold text-foreground">{BRAND_NAME}</span>
+      </header>
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="bg-card rounded-2xl border border-border shadow-sm p-8 max-w-sm w-full text-center">
+          <div className="w-12 h-12 rounded-full bg-border flex items-center justify-center mx-auto mb-4 text-xl">
+            {content.icon}
+          </div>
+          <h1 className="text-xl font-bold text-foreground mb-2">{content.heading}</h1>
+          <p className="text-sm text-muted">{content.body}</p>
+        </div>
       </div>
     </div>
   );
@@ -41,8 +55,8 @@ export default function ExpiredPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-border border-t-[var(--brand)] rounded-full animate-spin" />
         </div>
       }
     >
