@@ -7,6 +7,10 @@ import { DataTable } from '@/components/ui/DataTable';
 import { api } from '@/lib/api';
 import type { Question, Technology } from '@dev-assessment/shared';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { FileQuestion } from 'lucide-react';
 
 interface QuestionRow extends Question {
   technology_name: string;
@@ -41,6 +45,8 @@ export default function QuestionsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteBlocked, setBulkDeleteBlocked] = useState<Array<{ id: string; count: number }>>([]);
   const [deleteErrors, setDeleteErrors] = useState<Record<string, string>>({});
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [confirmSingleDeleteId, setConfirmSingleDeleteId] = useState<string | null>(null);
 
   const debouncedSearch = useDebounce(search, 300);
   const debouncedSkillArea = useDebounce(skillArea, 300);
@@ -76,7 +82,7 @@ export default function QuestionsPage() {
   useEffect(() => { fetchQuestions(); }, [fetchQuestions]);
 
   async function handleArchive(familyId: string) {
-    if (!confirm('Archive this question?')) return;
+    // D-08: archive is a soft/reversible action — no pre-confirmation needed
     try {
       await api.delete(`/questions/${familyId}`);
       toast.success('Question archived');
@@ -167,7 +173,12 @@ export default function QuestionsPage() {
   }
 
   async function handleBulkDelete() {
-    if (!window.confirm(`Delete ${selectedIds.size} question${selectedIds.size !== 1 ? 's' : ''} permanently? This cannot be undone.`)) return;
+    if (selectedIds.size === 0) return;
+    setConfirmBulkDelete(true);
+  }
+
+  async function executeBulkDelete() {
+    setConfirmBulkDelete(false);
     const ids = Array.from(selectedIds);
     try {
       const res = await api.post('/questions/bulk-delete', { ids });
@@ -186,12 +197,16 @@ export default function QuestionsPage() {
     }
   }
 
-  async function handleHardDelete(familyId: string) {
-    if (!window.confirm('Delete this question permanently? This cannot be undone.')) return;
+  function handleHardDeleteRequest(familyId: string) {
+    setConfirmSingleDeleteId(familyId);
+  }
+
+  async function executeHardDelete(familyId: string) {
+    setConfirmSingleDeleteId(null);
+    setDeleteErrors(prev => { const next = { ...prev }; delete next[familyId]; return next; });
     try {
       await api.delete(`/questions/${familyId}/hard`);
       toast.success('Question deleted');
-      setDeleteErrors(prev => { const next = { ...prev }; delete next[familyId]; return next; });
       fetchQuestions();
     } catch (err: unknown) {
       const axiosErr = err as { response?: { status?: number; data?: { message?: string } } };
@@ -275,7 +290,7 @@ export default function QuestionsPage() {
             )}
             {isOwner && (
               <button
-                onClick={() => handleHardDelete(row.original.family_id)}
+                onClick={() => handleHardDeleteRequest(row.original.family_id)}
                 className="text-red-600 hover:underline text-xs"
               >
                 Delete
@@ -388,14 +403,27 @@ export default function QuestionsPage() {
       )}
 
       <p className="text-sm text-muted mb-2">
-        {loading ? 'Loading...' : `${total} question${total !== 1 ? 's' : ''} total`}
+        {loading ? (
+          <Skeleton className="h-4 w-32 inline-block" />
+        ) : (
+          `${total} question${total !== 1 ? 's' : ''} total`
+        )}
       </p>
 
       <DataTable
         columns={columns}
         data={questions}
         pagination={{ page, pageSize: PAGE_SIZE, total, onPageChange: setPage }}
+        loading={loading}
       />
+
+      {!loading && total === 0 && (
+        <EmptyState
+          icon={<FileQuestion className="h-10 w-10" />}
+          title="No questions yet"
+          description="Import questions via CSV or create them individually."
+        />
+      )}
 
       {/* Bulk delete blocked warning */}
       {bulkDeleteBlocked.length > 0 && (
@@ -430,6 +458,28 @@ export default function QuestionsPage() {
           </div>
         </div>
       )}
+
+      {/* Bulk delete confirmation */}
+      <ConfirmDialog
+        open={confirmBulkDelete}
+        title={`Delete ${selectedIds.size} question${selectedIds.size !== 1 ? 's' : ''}?`}
+        description="This permanently removes the selected questions and cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={executeBulkDelete}
+        onCancel={() => setConfirmBulkDelete(false)}
+      />
+
+      {/* Single question delete confirmation */}
+      <ConfirmDialog
+        open={confirmSingleDeleteId !== null}
+        title="Delete question?"
+        description="This permanently removes the question and cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => confirmSingleDeleteId && executeHardDelete(confirmSingleDeleteId)}
+        onCancel={() => setConfirmSingleDeleteId(null)}
+      />
 
       {/* History Modal */}
       {historyModal && (
