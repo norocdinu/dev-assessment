@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import type { AdminUser } from '@dev-assessment/shared';
 
 const navItems = [
+  { href: '/dashboard', label: 'Dashboard' },
   { href: '/questions', label: 'Question Bank' },
   { href: '/test-configs', label: 'Test Configs' },
   { href: '/submissions', label: 'Submissions' },
