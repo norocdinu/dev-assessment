@@ -17,6 +17,7 @@ export default function LinksPage() {
   const [generating, setGenerating] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState('');
   const [copied, setCopied] = useState(false);
+  const [candidateName, setCandidateName] = useState('');
 
   useEffect(() => {
     api.get('/auth/me').then((r) => setUserRole(r.data.user.role)).catch(() => {});
@@ -41,8 +42,12 @@ export default function LinksPage() {
     setError('');
     setGeneratedUrl('');
     try {
-      const res = await api.post('/admin/test-links', { test_config_id: id });
+      const res = await api.post('/admin/test-links', {
+        test_config_id: id,
+        candidate_name: candidateName || undefined,
+      });
       setGeneratedUrl(res.data.url);
+      setCandidateName('');
       fetchLinks();
     } catch {
       setError('Failed to generate link. Please try again.');
@@ -73,8 +78,14 @@ export default function LinksPage() {
   }
 
   const isOwner = userRole === 'owner';
+  const isMember = userRole === 'member';
 
   const columns: ColumnDef<TestLink>[] = [
+    {
+      header: 'Candidate',
+      accessorKey: 'candidate_name',
+      cell: ({ getValue }) => getValue<string | null>() ?? '—',
+    },
     {
       header: 'Token',
       accessorKey: 'token',
@@ -139,14 +150,26 @@ export default function LinksPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900">Test Links</h2>
-        {isOwner && (
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50"
-          >
-            {generating ? 'Generating…' : 'Generate New Link'}
-          </button>
+        {(isOwner || isMember) && (
+          <div className="flex gap-2 items-end">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Candidate Name</label>
+              <input
+                type="text"
+                placeholder="Optional"
+                value={candidateName}
+                onChange={(e) => setCandidateName(e.target.value)}
+                className="w-48 px-3 py-2 border border-gray-300 rounded-md text-sm"
+              />
+            </div>
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {generating ? 'Generating…' : 'Generate New Link'}
+            </button>
+          </div>
         )}
       </div>
 
