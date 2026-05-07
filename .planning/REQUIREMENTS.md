@@ -19,9 +19,9 @@
 ### UI Polish (UI)
 
 - [ ] **UI-01**: Admin app uses a consistent type scale, spacing system, and accent colour palette throughout all pages
-- [ ] **UI-02**: All data tables and card panels show skeleton placeholders while data is loading
-- [ ] **UI-03**: All pages with no data display a friendly empty state with a message and suggested next action
-- [ ] **UI-04**: All success and error feedback uses sonner toast notifications (no `window.alert` or `window.confirm` for non-destructive actions)
+- [x] **UI-02**: All data tables and card panels show skeleton placeholders while data is loading — Validated in Phase 11: UX Pattern Library
+- [x] **UI-03**: All pages with no data display a friendly empty state with a message and suggested next action — Validated in Phase 11: UX Pattern Library
+- [x] **UI-04**: All success and error feedback uses sonner toast notifications (no `window.alert` or `window.confirm` for non-destructive actions) — Validated in Phase 11: UX Pattern Library
 
 ### Reporting (RPT)
 
