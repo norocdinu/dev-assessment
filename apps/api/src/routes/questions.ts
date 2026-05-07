@@ -79,7 +79,7 @@ export async function questionRoutes(app: FastifyInstance) {
     const showArchived = include_archived === 'true';
 
     const rows = await db`
-      SELECT q.*, t.name AS technology_name
+      SELECT q.*, t.slug AS tech_slug, t.name AS technology_name
       FROM questions q
       JOIN technologies t ON t.id = q.technology_id
       WHERE q.is_latest = TRUE
@@ -94,8 +94,9 @@ export async function questionRoutes(app: FastifyInstance) {
     const esc = (v: string | number | boolean | null | undefined) =>
       `"${String(v ?? '').replace(/"/g, '""')}"`;
 
-    const headers = ['Technology', 'Difficulty', 'Skill Area', 'Question Text', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Option'];
+    const headers = ['Technology', 'Difficulty', 'Skill Area', 'Question Text', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Option', 'Explanation'];
     const dataRows = (rows as unknown as Array<{
+      tech_slug: string;
       technology_name: string;
       difficulty: string;
       skill_area: string;
@@ -105,8 +106,9 @@ export async function questionRoutes(app: FastifyInstance) {
       option_c: string;
       option_d: string;
       correct_option: string;
+      explanation: string | null;
     }>).map(q => [
-      esc(q.technology_name),
+      esc(q.tech_slug),
       esc(q.difficulty),
       esc(q.skill_area),
       esc(q.text),
@@ -115,6 +117,7 @@ export async function questionRoutes(app: FastifyInstance) {
       esc(q.option_c),
       esc(q.option_d),
       esc(q.correct_option),
+      esc(q.explanation ?? ''),
     ].join(','));
 
     const csv = [headers.map(h => esc(h)).join(','), ...dataRows].join('\r\n');
