@@ -53,10 +53,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {label}
             </Link>
           ))}
+          {user.role === 'owner' && (
+            <Link
+              href="/accounts"
+              className={`flex items-center px-3 py-2 text-sm rounded-md ${
+                pathname.startsWith('/accounts')
+                  ? 'bg-blue-50 text-blue-700 font-medium'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              Accounts
+            </Link>
+          )}
         </nav>
         <div className="p-4 border-t border-gray-200 text-xs text-gray-500">
-          <div className="font-medium text-gray-700">{user.email}</div>
-          <div className="capitalize">{user.role}</div>
+          <Link
+            href="/settings"
+            className="block hover:bg-gray-50 rounded -mx-1 px-1 py-1 mb-1"
+          >
+            <div className="font-medium text-gray-700">{user.name || user.email}</div>
+            {user.name && <div className="text-gray-500">{user.email}</div>}
+            <div className="capitalize text-gray-400">{user.role}</div>
+          </Link>
           <button
             onClick={() => {
               localStorage.removeItem('auth_token');
