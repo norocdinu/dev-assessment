@@ -7,7 +7,7 @@
 
 ### Bug Fixes (FIX)
 
-- [ ] **FIX-01**: Admin can import a CSV file that was previously exported from the question bank without any row errors (round-trip fix)
+- [x] **FIX-01**: Admin can import a CSV file that was previously exported from the question bank without any row errors (round-trip fix)
 
 ### Test Config UX (TESTS)
 
@@ -63,7 +63,7 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | Phase 6 | Pending |
+| FIX-01 | Phase 6 | Complete |
 | TESTS-06 | Phase 7 | Pending |
 | TESTS-07 | Phase 7 | Pending |
 | DASH-06 | Phase 8 | Pending |

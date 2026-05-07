@@ -4,15 +4,15 @@
 
 ---
 
-## Phase 6 — Foundation & Fixes (v1.1 start)
+## Phase 6 — Foundation & Fixes (v1.1 start) ✓ Complete 2026-05-07
 
 **Goal**: Prerequisite DB changes and the CSV round-trip bug land safely before any feature work begins.
 
 **Requirements**: FIX-01 + DB prerequisites for TESTS-06, ACCESS-08
 
 **Plans**:
-- 06-01: DB migration (add 'member' to role CHECK constraint, add candidate_name to test_links) + update shared AdminUser type
-- 06-02: CSV import fix (export slug not display name, add explanation column, fix multiline split)
+- [x] 06-01: DB migration (add 'member' to role CHECK constraint, add candidate_name to test_links) + update shared AdminUser type
+- [x] 06-02: CSV import fix (export slug not display name, add explanation column, fix multiline split)
 
 **Deliverables**:
 - Migration file: ALTER `admin_users.role` CHECK to include `'member'`; ADD `candidate_name TEXT` to `test_links`
