@@ -1,7 +1,9 @@
+import { CandidateThemeProvider } from '@/components/candidate/CandidateThemeProvider';
+
 export default function CandidateLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return <CandidateThemeProvider>{children}</CandidateThemeProvider>;
 }
