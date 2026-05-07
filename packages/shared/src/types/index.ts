@@ -44,7 +44,7 @@ export interface TestConfig {
 export interface AdminUser {
   id: string;
   email: string;
-  role: 'owner' | 'reviewer';
+  role: 'owner' | 'reviewer' | 'member';
 }
 
 export interface TestLink {
