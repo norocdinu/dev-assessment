@@ -6,6 +6,9 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/DataTable';
 import { api } from '@/lib/api';
 import type { TestLink } from '@dev-assessment/shared';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Link2Off } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function LinksPage() {
   const { id } = useParams<{ id: string }>();
@@ -57,13 +60,13 @@ export default function LinksPage() {
   }
 
   async function handleRevoke(linkId: string) {
-    if (!confirm('Revoke this link? Candidates with this link will no longer be able to start a test.')) return;
     try {
       await api.delete(`/admin/test-links/${linkId}`);
       setGeneratedUrl('');
+      toast.success('Link revoked');
       fetchLinks();
     } catch {
-      setError('Failed to revoke link. Please try again.');
+      toast.error('Failed to revoke link. Please try again.');
     }
   }
 
@@ -199,10 +202,14 @@ export default function LinksPage() {
         </div>
       )}
 
-      {loading ? (
-        <p className="text-sm text-muted/70">Loading…</p>
-      ) : (
-        <DataTable columns={columns} data={links} />
+      <DataTable columns={columns} data={links} loading={loading} />
+
+      {!loading && links.length === 0 && (
+        <EmptyState
+          icon={<Link2Off className="h-10 w-10" />}
+          title="No links generated yet"
+          description="Use the form above to generate a candidate assessment link."
+        />
       )}
     </div>
   );
