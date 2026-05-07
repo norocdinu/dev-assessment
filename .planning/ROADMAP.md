@@ -67,8 +67,16 @@
 **Requirements**: DASH-06, DASH-07, DASH-08, DASH-09, SUB-01
 
 **Plans**:
+
+**Wave 1**
 - 08-01: Backend — dashboard aggregate endpoints (cross-config KPIs, recent candidates, competency breakdown), submission hard-delete
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - 08-02: Frontend — dashboard page (KPI cards, recent candidates list, score distribution chart, competency breakdown chart), submission delete UI
+
+**Cross-cutting constraints:**
+- All chart components must use `dynamic(..., { ssr: false })` (Recharts v3 requires browser APIs)
+- `DELETE /admin/submissions/:linkId` is owner-only; delete order: `candidate_answers` first, then `submission_results` (FK constraint)
 
 **Deliverables**:
 - `GET /dashboard/stats` — returns: `{ totalCandidates, passRate, avgScore, weakestSkillArea, recentSubmissions[10] }` (any authenticated admin)
