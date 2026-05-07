@@ -29,13 +29,13 @@ export function DataTable<T>({ columns, data, pagination }: DataTableProps<T>) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+        <thead className="bg-muted/10 border-b border-border sticky top-0">
           {table.getHeaderGroups().map((hg) => (
             <tr key={hg.id}>
               {hg.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap"
+                  className="px-4 py-3 text-left font-medium text-foreground/70 whitespace-nowrap"
                 >
                   {header.isPlaceholder
                     ? null
@@ -49,10 +49,10 @@ export function DataTable<T>({ columns, data, pagination }: DataTableProps<T>) {
           {table.getRowModel().rows.map((row, i) => (
             <tr
               key={row.id}
-              className={`border-b border-gray-100 hover:bg-blue-50 transition-colors ${i % 2 === 1 ? 'bg-gray-50/50' : 'bg-white'}`}
+              className={`border-b border-border/50 hover:bg-[rgb(var(--brand-rgb))]/10 transition-colors ${i % 2 === 1 ? 'bg-muted/5' : 'bg-card'}`}
             >
               {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-4 py-3 text-gray-700">
+                <td key={cell.id} className="px-4 py-3 text-foreground/80">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
@@ -62,7 +62,7 @@ export function DataTable<T>({ columns, data, pagination }: DataTableProps<T>) {
             <tr>
               <td
                 colSpan={columns.length}
-                className="px-4 py-8 text-center text-gray-400"
+                className="px-4 py-8 text-center text-muted/70"
               >
                 No results
               </td>
@@ -71,7 +71,7 @@ export function DataTable<T>({ columns, data, pagination }: DataTableProps<T>) {
         </tbody>
       </table>
       {pagination && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-white text-sm text-gray-600">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-card text-sm text-foreground/70">
           <span>
             Showing {showingStart}–{showingEnd} of {pagination.total}
           </span>
@@ -79,14 +79,14 @@ export function DataTable<T>({ columns, data, pagination }: DataTableProps<T>) {
             <button
               onClick={() => pagination.onPageChange(pagination.page - 1)}
               disabled={pagination.page <= 1}
-              className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+              className="px-3 py-1 border border-border rounded-md disabled:opacity-40 hover:bg-muted/10"
             >
               Prev
             </button>
             <button
               onClick={() => pagination.onPageChange(pagination.page + 1)}
               disabled={pagination.page * pagination.pageSize >= pagination.total}
-              className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+              className="px-3 py-1 border border-border rounded-md disabled:opacity-40 hover:bg-muted/10"
             >
               Next
             </button>

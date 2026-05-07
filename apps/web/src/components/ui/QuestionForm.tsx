@@ -76,23 +76,23 @@ export function QuestionForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-5 max-w-2xl">
       {currentVersion && (
-        <p className="text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded">
+        <p className="text-sm text-[var(--brand)] bg-[rgb(var(--brand-rgb))]/10 px-3 py-2 rounded">
           Editing v{currentVersion} — saving will create v{currentVersion + 1}
         </p>
       )}
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Technology</label>
-          <select value={values.technology_id} onChange={set('technology_id')} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+          <label className="block text-sm font-medium text-foreground/80 mb-1">Technology</label>
+          <select value={values.technology_id} onChange={set('technology_id')} className="w-full px-3 py-2 border border-border rounded-md text-sm">
             <option value="">Select...</option>
             {technologies.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
           {errors.technology_id && <p className="text-xs text-red-600 mt-1">{errors.technology_id}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
-          <select value={values.difficulty} onChange={set('difficulty')} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+          <label className="block text-sm font-medium text-foreground/80 mb-1">Difficulty</label>
+          <select value={values.difficulty} onChange={set('difficulty')} className="w-full px-3 py-2 border border-border rounded-md text-sm">
             <option value="junior">Junior</option>
             <option value="mid">Mid</option>
             <option value="senior">Senior</option>
@@ -101,25 +101,25 @@ export function QuestionForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Skill Area</label>
-        <input type="text" value={values.skill_area} onChange={set('skill_area')} placeholder="e.g. DAX, Data Modelling" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+        <label className="block text-sm font-medium text-foreground/80 mb-1">Skill Area</label>
+        <input type="text" value={values.skill_area} onChange={set('skill_area')} placeholder="e.g. DAX, Data Modelling" className="w-full px-3 py-2 border border-border rounded-md text-sm" />
         {errors.skill_area && <p className="text-xs text-red-600 mt-1">{errors.skill_area}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Question Text</label>
-        <textarea rows={3} value={values.text} onChange={set('text')} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+        <label className="block text-sm font-medium text-foreground/80 mb-1">Question Text</label>
+        <textarea rows={3} value={values.text} onChange={set('text')} className="w-full px-3 py-2 border border-border rounded-md text-sm" />
         {errors.text && <p className="text-xs text-red-600 mt-1">{errors.text}</p>}
       </div>
 
       {(['a', 'b', 'c', 'd'] as const).map((opt) => (
         <div key={opt}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Option {opt.toUpperCase()}</label>
+          <label className="block text-sm font-medium text-foreground/80 mb-1">Option {opt.toUpperCase()}</label>
           <input
             type="text"
             value={values[`option_${opt}` as keyof QuestionFormValues]}
             onChange={set(`option_${opt}` as keyof QuestionFormValues)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="w-full px-3 py-2 border border-border rounded-md text-sm"
           />
           {errors[`option_${opt}` as keyof QuestionFormValues] && (
             <p className="text-xs text-red-600 mt-1">{errors[`option_${opt}` as keyof QuestionFormValues]}</p>
@@ -128,7 +128,7 @@ export function QuestionForm({
       ))}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Correct Answer</label>
+        <label className="block text-sm font-medium text-foreground/80 mb-2">Correct Answer</label>
         <div className="flex gap-4">
           {(['a', 'b', 'c', 'd'] as const).map((opt) => (
             <label key={opt} className="flex items-center gap-1.5 text-sm cursor-pointer">
@@ -146,14 +146,14 @@ export function QuestionForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Explanation (optional)</label>
-        <textarea rows={2} value={values.explanation} onChange={set('explanation')} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+        <label className="block text-sm font-medium text-foreground/80 mb-1">Explanation (optional)</label>
+        <textarea rows={2} value={values.explanation} onChange={set('explanation')} className="w-full px-3 py-2 border border-border rounded-md text-sm" />
       </div>
 
       <button
         type="submit"
         disabled={isLoading}
-        className="px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50"
+        className="px-6 py-2 bg-[var(--brand)] text-white text-sm font-medium rounded-md hover:bg-[var(--brand)]/90 disabled:opacity-50"
       >
         {isLoading ? 'Saving…' : 'Save Question'}
       </button>
