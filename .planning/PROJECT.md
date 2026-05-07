@@ -8,17 +8,27 @@ A web-based multi-technology candidate assessment platform for technical hiring.
 
 A candidate receives a link and gets a fair, repeatable, automatically-graded test — every time, for any technology, at any seniority level.
 
-## Current Milestone: v1.1 — First Iteration
+## Current Milestone: v1.2 — Front End Improvements
 
-**Goal:** Polish the platform for real team use — fix rough edges, add a proper analytics dashboard, and expand account management.
+**Goal:** Redesign the candidate test experience with a modern, mobile-first aesthetic and polish the admin app with dark mode, skeletons, consistent toasts, and actionable reporting tools.
 
 **Target features:**
-- CSV import round-trip fix — exported CSV imports cleanly without errors
-- Submission deletion — owners can delete test submissions
-- Test config UX — rename link "Name" to "Candidate Name", default pass threshold 80%
-- Comprehensive dashboard — recent candidates list, overall score chart, competency breakdown charts, KPIs
-- Account settings page — clickable admin info (bottom-left) → change password
-- Multi-account management — add/manage accounts; new Member role (generate links + view results; cannot manage questions or delete submissions)
+- Candidate test page redesign — fresh modern design, mobile-ready, dark mode; first impression of the company
+- Dark mode toggle — admin app full dark/light theme switch
+- Typography & spacing polish — consistent type scale and padding across admin
+- Colour & brand consistency — accent colours, button styles, badge palette
+- Loading skeletons — replace spinners on tables and cards
+- Empty states — friendly messages when tables/charts have no data
+- Toast notifications — consistent sonner toasts replacing all alert() calls
+- PDF / print report — downloadable candidate submission summary
+- Candidate UI polish — improved timer, progress indicator, confirmation screen
+- Dashboard filters — filter stats and charts by test config or date range
+- Admin responsive — admin panel usable on tablets
+
+## Previous: v1.1 Shipped (2026-05-07)
+
+All 7 v1.1 requirements delivered across 3 phases.
+CSV fix, analytics dashboard, submission deletion, test config UX, account settings, multi-account RBAC.
 
 ## Previous: v1.0 Shipped (2026-05-07)
 
@@ -31,15 +41,18 @@ See [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full archive.
 
 All 24 v1 requirements — see [milestones/v1.0-REQUIREMENTS.md](milestones/v1.0-REQUIREMENTS.md)
 
-### Active (v1.1)
+### Active (v1.2)
 
-- [x] CSV import accepts files exported from the system without errors — Validated in Phase 6
-- [ ] Owner can delete a test submission (removes from dashboard and reports)
-- [x] Test config link creation uses "Candidate Name" label with 80% pass default — Validated in Phase 7
-- [ ] Dashboard shows recent candidates list, score distribution chart, competency breakdown, and KPI summary
-- [x] Admin can open an account settings page and change their password — Validated in Phase 7
-- [x] Owner can create and manage admin accounts with Owner, Member, or Reviewer roles — Validated in Phase 7
-- [x] Member role can generate test links and view results but cannot manage questions or delete submissions — Validated in Phase 7
+- [ ] Candidate test page has a fresh modern design that is mobile-ready and supports dark mode
+- [ ] Admin app has a dark/light mode toggle persisted per user
+- [ ] Typography, spacing, and colour palette are consistent across all admin pages
+- [ ] Tables and cards show loading skeletons instead of spinners while data loads
+- [ ] All pages with no data show friendly empty state messages or illustrations
+- [ ] All success/error actions use sonner toast notifications (no alert() or browser dialogs)
+- [ ] Owner can download a PDF summary of a candidate's submission results
+- [ ] Candidate test page shows a clear progress indicator and confirmation screen on submit
+- [ ] Dashboard stats and charts can be filtered by test config and date range
+- [ ] Admin panel is usable on tablet-sized screens
 
 ### Out of Scope
 
@@ -81,4 +94,4 @@ All 24 v1 requirements — see [milestones/v1.0-REQUIREMENTS.md](milestones/v1.0
 This document evolves at phase transitions and milestone boundaries.
 
 ---
-*Last updated: 2026-05-07 — Phase 7 complete (account CRUD, Member RBAC, settings, test config UX)*
+*Last updated: 2026-05-07 — Milestone v1.2 started (front end improvements — candidate redesign, dark mode, polish)*
