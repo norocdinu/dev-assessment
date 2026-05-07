@@ -101,6 +101,8 @@ export default function SubmissionDetailPage() {
   const [result, setResult] = useState<AdminSubmissionResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!linkId) return;
@@ -109,6 +111,7 @@ export default function SubmissionDetailPage() {
       .then((r) => setResult(r.data))
       .catch(() => setError('Failed to load submission.'))
       .finally(() => setLoading(false));
+    api.get('/auth/me').then(r => setUserRole(r.data.user.role)).catch(() => {});
   }, [linkId]);
 
   if (loading) {
@@ -125,6 +128,18 @@ export default function SubmissionDetailPage() {
         <p className="text-sm text-red-600">{error || 'Submission not found.'}</p>
       </div>
     );
+  }
+
+  async function handleDelete() {
+    if (!window.confirm("This will permanently remove this candidate's results. Are you sure?")) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/admin/submissions/${linkId}`);
+      router.push('/submissions');
+    } catch {
+      setDeleting(false);
+      alert('Failed to delete submission. Please try again.');
+    }
   }
 
   const passClass = result.pass
@@ -153,9 +168,20 @@ export default function SubmissionDetailPage() {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-semibold text-gray-900">{result.test_name}</h1>
-          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${passClass}`}>
-            {result.pass ? 'PASS' : 'FAIL'}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${passClass}`}>
+              {result.pass ? 'PASS' : 'FAIL'}
+            </span>
+            {userRole === 'owner' && (
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-3 py-1 text-sm text-red-600 border border-red-300 rounded-md hover:bg-red-50 disabled:opacity-50"
+              >
+                {deleting ? 'Deleting…' : 'Delete Submission'}
+              </button>
+            )}
+          </div>
         </div>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
