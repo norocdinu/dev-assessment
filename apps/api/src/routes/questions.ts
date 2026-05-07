@@ -346,8 +346,8 @@ export async function questionRoutes(app: FastifyInstance) {
     const buffer = buf;
     const text = buffer.toString('utf-8').replace(/^﻿/, ''); // strip BOM
 
-    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-    if (lines.length < 2) return reply.status(400).send({ error: 'CSV must have a header row and at least one data row' });
+    const allRows = parseCsvText(text);
+    if (allRows.length < 2) return reply.status(400).send({ error: 'CSV must have a header row and at least one data row' });
 
     // Load all technologies for slug → id lookup
     const technologies = await db`SELECT id, slug FROM technologies`;
@@ -372,9 +372,9 @@ export async function questionRoutes(app: FastifyInstance) {
     const errors: Array<{ row: number; reason: string }> = [];
 
     // Skip header row (index 0), process data rows
-    for (let i = 1; i < lines.length; i++) {
+    for (let i = 1; i < allRows.length; i++) {
       const rowNum = i + 1; // 1-indexed, header is row 1
-      const cols = parseCsvLine(lines[i]);
+      const cols = allRows[i];
       // Expected: technology_slug,difficulty,skill_area,text,option_a,option_b,option_c,option_d,correct_option,explanation
       if (cols.length < 9) {
         errors.push({ row: rowNum, reason: `Expected at least 9 columns, got ${cols.length}` });
@@ -425,27 +425,55 @@ export async function questionRoutes(app: FastifyInstance) {
   });
 }
 
-function parseCsvLine(line: string): string[] {
-  const result: string[] = [];
-  let current = '';
+function parseCsvText(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = '';
   let inQuotes = false;
+  let i = 0;
 
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
+  while (i < text.length) {
+    const ch = text[i];
+
     if (ch === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        current += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
+      if (inQuotes && text[i + 1] === '"') {
+        // Escaped quote inside quoted field
+        cell += '"';
+        i += 2;
+        continue;
       }
-    } else if (ch === ',' && !inQuotes) {
-      result.push(current.trim());
-      current = '';
-    } else {
-      current += ch;
+      inQuotes = !inQuotes;
+      i++;
+      continue;
     }
+
+    if (ch === ',' && !inQuotes) {
+      row.push(cell.trim());
+      cell = '';
+      i++;
+      continue;
+    }
+
+    if ((ch === '\r' || ch === '\n') && !inQuotes) {
+      if (ch === '\r' && text[i + 1] === '\n') i++; // consume \r in \r\n pair
+      row.push(cell.trim());
+      if (row.some(c => c !== '')) rows.push(row);
+      row = [];
+      cell = '';
+      i++;
+      continue;
+    }
+
+    cell += ch;
+    i++;
   }
-  result.push(current.trim());
-  return result;
+
+  // Handle final row with no trailing newline
+  const lastCell = cell.trim();
+  if (lastCell || row.length > 0) {
+    row.push(lastCell);
+    if (row.some(c => c !== '')) rows.push(row);
+  }
+
+  return rows;
 }
