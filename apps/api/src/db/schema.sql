@@ -6,7 +6,7 @@ CREATE TABLE admin_users (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email         TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
-  role          TEXT NOT NULL CHECK (role IN ('owner', 'reviewer')),
+  role          TEXT NOT NULL CHECK (role IN ('owner', 'reviewer', 'member')),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   last_login_at TIMESTAMPTZ
 );
@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS test_links (
   started_at     TIMESTAMPTZ,
   submitted_at   TIMESTAMPTZ,
   created_by     UUID NOT NULL REFERENCES admin_users(id),
+  candidate_name TEXT,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_test_links_token ON test_links (token);
@@ -120,3 +121,7 @@ INSERT INTO technologies (slug, name) VALUES
   ('sfmc',             'Salesforce Marketing Cloud'),
   ('data-engineering', 'Data Engineering')
 ON CONFLICT (slug) DO NOTHING;
+
+-- Phase 6: Member role + candidate_name
+-- Applied via ALTER TABLE on existing DBs (see migrate.ts)
+-- Included here as documentation of final schema intent
