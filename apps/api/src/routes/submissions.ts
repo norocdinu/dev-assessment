@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { db } from '../db/client.js';
-import { authMiddleware } from '../middleware/auth.js';
+import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { requireRole } from '../middleware/rbac.js';
 
 const listQuerySchema = z.object({
@@ -157,6 +157,41 @@ export async function submissionRoutes(app: FastifyInstance) {
     `;
 
     return reply.status(200).send({ data: rows, total: Number(countRow.count), page, pageSize });
+  });
+
+  // DELETE /admin/submissions/:linkId  — hard delete (owner-only)
+  app.delete('/:linkId', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
+    const { linkId } = request.params as { linkId: string };
+
+    // 1. Check submission exists
+    const [existing] = await db`
+      SELECT id FROM submission_results WHERE link_id = ${linkId}
+    `;
+    if (!existing) {
+      return reply.status(404).send({ error: 'Submission not found' });
+    }
+
+    // 2. Write audit log before transaction
+    const admin = getAuthUser(request);
+    await db`
+      INSERT INTO audit_log (admin_id, action, entity_type, entity_id, detail)
+      VALUES (
+        ${admin.id},
+        'submission.delete',
+        'submission',
+        ${linkId},
+        ${JSON.stringify({ deleted_by: admin.email })}::jsonb
+      )
+    `;
+
+    // 3. Delete in transaction: candidate_answers first (FK), then submission_results
+    await db.begin(async sql => {
+      await sql`DELETE FROM candidate_answers WHERE link_id = ${linkId}`;
+      await sql`DELETE FROM submission_results WHERE link_id = ${linkId}`;
+    });
+
+    // test_links row is preserved (D-09)
+    return reply.status(204).send();
   });
 
   // GET /admin/submissions/:linkId  — single submission detail (Phase 3)
