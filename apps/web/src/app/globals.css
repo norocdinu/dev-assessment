@@ -9,6 +9,7 @@
   --muted: 113 113 122;        /* #71717a */
   --border: 228 228 231;       /* #e4e4e7 */
   --brand: #6366f1;            /* fallback indigo — overridden via inline style */
+  --brand-rgb: 99 102 241;     /* RGB triplet for #6366f1 — enables opacity modifiers */
 }
 
 .dark {
