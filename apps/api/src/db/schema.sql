@@ -6,6 +6,7 @@ CREATE TABLE admin_users (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email         TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
+  name          TEXT NOT NULL DEFAULT '',
   role          TEXT NOT NULL CHECK (role IN ('owner', 'reviewer', 'member')),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   last_login_at TIMESTAMPTZ
@@ -123,5 +124,6 @@ INSERT INTO technologies (slug, name) VALUES
 ON CONFLICT (slug) DO NOTHING;
 
 -- Phase 6: Member role + candidate_name
+-- Phase 7: name column on admin_users
 -- Applied via ALTER TABLE on existing DBs (see migrate.ts)
 -- Included here as documentation of final schema intent
