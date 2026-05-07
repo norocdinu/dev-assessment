@@ -13,6 +13,7 @@ import { candidateRoutes } from './routes/candidate.js';
 import { submissionRoutes } from './routes/submissions.js';
 import { statsRoutes } from './routes/stats.js';
 import { accountRoutes } from './routes/accounts.js';
+import { dashboardRoutes } from './routes/dashboard.js';
 
 const app = Fastify({ logger: true });
 
@@ -49,6 +50,7 @@ await app.register(testLinkRoutes, { prefix: '/admin/test-links' });
 await app.register(submissionRoutes, { prefix: '/admin/submissions' });
 await app.register(statsRoutes, { prefix: '/admin/stats' });
 await app.register(accountRoutes, { prefix: '/admin/accounts' });
+await app.register(dashboardRoutes, { prefix: '/dashboard' });
 
 await app.register(async (candidateApp) => {
   candidateApp.addHook('onRequest', async (request, reply) => {
