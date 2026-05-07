@@ -33,13 +33,13 @@ All 24 v1 requirements — see [milestones/v1.0-REQUIREMENTS.md](milestones/v1.0
 
 ### Active (v1.1)
 
-- [ ] CSV import accepts files exported from the system without errors
+- [x] CSV import accepts files exported from the system without errors — Validated in Phase 6
 - [ ] Owner can delete a test submission (removes from dashboard and reports)
-- [ ] Test config link creation uses "Candidate Name" label with 80% pass default
+- [x] Test config link creation uses "Candidate Name" label with 80% pass default — Validated in Phase 7
 - [ ] Dashboard shows recent candidates list, score distribution chart, competency breakdown, and KPI summary
-- [ ] Admin can open an account settings page and change their password
-- [ ] Owner can create and manage admin accounts with Owner, Member, or Reviewer roles
-- [ ] Member role can generate test links and view results but cannot manage questions or delete submissions
+- [x] Admin can open an account settings page and change their password — Validated in Phase 7
+- [x] Owner can create and manage admin accounts with Owner, Member, or Reviewer roles — Validated in Phase 7
+- [x] Member role can generate test links and view results but cannot manage questions or delete submissions — Validated in Phase 7
 
 ### Out of Scope
 
@@ -81,4 +81,4 @@ All 24 v1 requirements — see [milestones/v1.0-REQUIREMENTS.md](milestones/v1.0
 This document evolves at phase transitions and milestone boundaries.
 
 ---
-*Last updated: 2026-05-07 after v1.1 milestone start*
+*Last updated: 2026-05-07 — Phase 7 complete (account CRUD, Member RBAC, settings, test config UX)*
