@@ -16,24 +16,24 @@ export function QuestionNav({
   onNavigate,
 }: QuestionNavProps) {
   return (
-    <div className="flex flex-wrap gap-1.5" role="navigation" aria-label="Question navigation">
+    <div className="flex flex-wrap gap-2" role="navigation" aria-label="Question navigation">
       {Array.from({ length: totalQuestions }, (_, i) => {
         const isAnswered = Boolean(answers[questionIds[i]]);
         const isCurrent = i === currentIndex;
-
-        const squareClass = isCurrent
-          ? 'ring-2 ring-blue-600 bg-white text-blue-600'
-          : isAnswered
-          ? 'bg-blue-600 text-white'
-          : 'bg-gray-200 text-gray-600 hover:bg-gray-300';
 
         return (
           <button
             key={i}
             onClick={() => onNavigate(i)}
-            aria-label={`Go to question ${i + 1}`}
-            aria-pressed={isCurrent}
-            className={`w-8 h-8 rounded text-xs font-medium flex items-center justify-center cursor-pointer ${squareClass}`}
+            aria-label={`Go to question ${i + 1}${isAnswered ? ' (answered)' : ''}`}
+            aria-current={isCurrent ? 'true' : undefined}
+            className={`w-9 h-9 rounded-lg text-xs font-semibold flex items-center justify-center transition-all ${
+              isCurrent
+                ? 'ring-2 ring-[var(--brand)] ring-offset-1 ring-offset-background bg-[var(--brand)]/10 text-[var(--brand)]'
+                : isAnswered
+                ? 'bg-[var(--brand)] text-white shadow-sm'
+                : 'bg-border text-muted hover:bg-[var(--brand)]/20 hover:text-[var(--brand)]'
+            }`}
           >
             {i + 1}
           </button>
