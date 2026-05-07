@@ -32,7 +32,7 @@ export default function NewQuestionPage() {
 
   return (
     <div className="p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">New Question</h2>
+      <h2 className="text-lg font-semibold text-foreground mb-6">New Question</h2>
       {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
       <QuestionForm
         technologies={technologies}

@@ -39,12 +39,12 @@ export default function EditQuestionPage() {
     }
   }
 
-  if (!question && !error) return <div className="p-6 text-gray-500">Loading…</div>;
+  if (!question && !error) return <div className="p-6 text-muted">Loading…</div>;
   if (error) return <div className="p-6 text-red-600">{error}</div>;
 
   return (
     <div className="p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">Edit Question</h2>
+      <h2 className="text-lg font-semibold text-foreground mb-6">Edit Question</h2>
       <QuestionForm
         technologies={technologies}
         initialValues={{

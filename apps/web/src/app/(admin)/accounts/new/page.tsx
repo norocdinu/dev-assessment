@@ -57,37 +57,37 @@ export default function NewAccountPage() {
 
   return (
     <div className="p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">Create Account</h2>
+      <h2 className="text-lg font-semibold text-foreground mb-6">Create Account</h2>
       {submitError && <p className="text-sm text-red-600 mb-4">{submitError}</p>}
       <form onSubmit={handleSubmit} className="space-y-5 max-w-lg">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+          <label className="block text-sm font-medium text-foreground/80 mb-1">Name</label>
           <input
             type="text"
             value={values.name}
             onChange={set('name')}
             placeholder="e.g. Jane Smith"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="w-full px-3 py-2 border border-border rounded-md text-sm"
           />
           {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <label className="block text-sm font-medium text-foreground/80 mb-1">Email</label>
           <input
             type="email"
             value={values.email}
             onChange={set('email')}
             placeholder="jane@company.com"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="w-full px-3 py-2 border border-border rounded-md text-sm"
           />
           {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+          <label className="block text-sm font-medium text-foreground/80 mb-1">Role</label>
           <select
             value={values.role}
             onChange={set('role')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="w-full px-3 py-2 border border-border rounded-md text-sm"
           >
             <option value="">Select role…</option>
             <option value="owner">Owner</option>
@@ -97,21 +97,21 @@ export default function NewAccountPage() {
           {errors.role && <p className="text-xs text-red-600 mt-1">{errors.role}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <label className="block text-sm font-medium text-foreground/80 mb-1">Password</label>
           <input
             type="password"
             value={values.password}
             onChange={set('password')}
             placeholder="Min. 8 characters"
             autoComplete="new-password"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="w-full px-3 py-2 border border-border rounded-md text-sm"
           />
           {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password}</p>}
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50"
+          className="px-6 py-2 bg-[var(--brand)] text-white text-sm font-medium rounded-md hover:bg-[var(--brand)]/90 disabled:opacity-50"
         >
           {loading ? 'Creating…' : 'Create Account'}
         </button>

@@ -80,54 +80,54 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="p-6">
-        <p className="text-sm text-gray-400">Loading…</p>
+        <p className="text-sm text-muted/70">Loading…</p>
       </div>
     );
   }
 
   return (
     <div className="p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">Account Settings</h2>
+      <h2 className="text-lg font-semibold text-foreground mb-6">Account Settings</h2>
 
       {/* Section 1: Display Name */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-4">Display Name</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-4">Display Name</h3>
         <form onSubmit={handleSaveName} className="space-y-5 max-w-lg">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-foreground/80 mb-1">Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Jane Smith"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              className="w-full px-3 py-2 border border-border rounded-md text-sm"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-foreground/80 mb-1">Email</label>
             <input
               type="email"
               value={nameEmail}
               readOnly
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-50 cursor-not-allowed text-gray-500"
+              className="w-full px-3 py-2 border border-border rounded-md text-sm bg-muted/10 cursor-not-allowed text-muted"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Current Password (to confirm)</label>
+            <label className="block text-sm font-medium text-foreground/80 mb-1">Current Password (to confirm)</label>
             <input
               type="password"
               value={nameCurrentPw}
               onChange={(e) => setNameCurrentPw(e.target.value)}
               autoComplete="current-password"
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              className="w-full px-3 py-2 border border-border rounded-md text-sm"
             />
           </div>
           <div>
             <button
               type="submit"
               disabled={nameSaving}
-              className="px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-6 py-2 bg-[var(--brand)] text-white text-sm font-medium rounded-md hover:bg-[var(--brand)]/90 disabled:opacity-50"
             >
               {nameSaving ? 'Saving…' : 'Save Name'}
             </button>
@@ -136,48 +136,48 @@ export default function SettingsPage() {
         </form>
       </div>
 
-      <hr className="border-t border-gray-200 my-8" />
+      <hr className="border-t border-border my-8" />
 
       {/* Section 2: Change Password */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-4">Change Password</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-4">Change Password</h3>
         <form onSubmit={handleChangePassword} className="space-y-5 max-w-lg">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+            <label className="block text-sm font-medium text-foreground/80 mb-1">Current Password</label>
             <input
               type="password"
               value={pwCurrent}
               onChange={(e) => setPwCurrent(e.target.value)}
               autoComplete="current-password"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              className="w-full px-3 py-2 border border-border rounded-md text-sm"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+            <label className="block text-sm font-medium text-foreground/80 mb-1">New Password</label>
             <input
               type="password"
               value={pwNew}
               onChange={(e) => setPwNew(e.target.value)}
               autoComplete="new-password"
               minLength={8}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              className="w-full px-3 py-2 border border-border rounded-md text-sm"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+            <label className="block text-sm font-medium text-foreground/80 mb-1">Confirm New Password</label>
             <input
               type="password"
               value={pwConfirm}
               onChange={(e) => setPwConfirm(e.target.value)}
               autoComplete="new-password"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              className="w-full px-3 py-2 border border-border rounded-md text-sm"
             />
           </div>
           <div>
             <button
               type="submit"
               disabled={pwSaving}
-              className="px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-6 py-2 bg-[var(--brand)] text-white text-sm font-medium rounded-md hover:bg-[var(--brand)]/90 disabled:opacity-50"
             >
               {pwSaving ? 'Updating…' : 'Update Password'}
             </button>

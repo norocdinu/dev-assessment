@@ -57,7 +57,7 @@ export default function TestConfigsPage() {
         <div className="flex gap-2">
           <button
             onClick={() => router.push(`/test-configs/${row.original.id}/links`)}
-            className="text-blue-600 hover:underline text-xs"
+            className="text-[var(--brand)] hover:underline text-xs"
           >
             Generate Link
           </button>
@@ -77,18 +77,18 @@ export default function TestConfigsPage() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Test Configurations</h2>
+        <h2 className="text-lg font-semibold text-foreground">Test Configurations</h2>
         {isOwner && (
           <button
             onClick={() => router.push('/test-configs/new')}
-            className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+            className="px-4 py-2 bg-[var(--brand)] text-white text-sm rounded-md hover:bg-[var(--brand)]/90"
           >
             New Test Config
           </button>
         )}
       </div>
       {loading ? (
-        <p className="text-sm text-gray-400">Loading…</p>
+        <p className="text-sm text-muted/70">Loading…</p>
       ) : (
         <DataTable columns={columns} data={configs} />
       )}
