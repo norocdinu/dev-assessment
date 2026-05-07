@@ -25,20 +25,20 @@ const answerSheetColumns: ColumnDef<AdminAnswerSheetRow>[] = [
   {
     header: '#',
     id: 'index',
-    cell: ({ row }) => <span className="text-gray-400">{row.index + 1}</span>,
+    cell: ({ row }) => <span className="text-muted/70">{row.index + 1}</span>,
   },
   {
     header: 'Question',
     accessorKey: 'question_text',
     cell: ({ getValue }) => (
-      <span className="text-sm text-gray-700 max-w-xs block">{getValue<string>()}</span>
+      <span className="text-sm text-foreground/80 max-w-xs block">{getValue<string>()}</span>
     ),
   },
   {
     header: 'Skill Area',
     accessorKey: 'skill_area',
     cell: ({ getValue }) => (
-      <span className="text-xs text-gray-500">{getValue<string>()}</span>
+      <span className="text-xs text-muted">{getValue<string>()}</span>
     ),
   },
   {
@@ -47,11 +47,11 @@ const answerSheetColumns: ColumnDef<AdminAnswerSheetRow>[] = [
     cell: ({ row }) => {
       const ans = row.original.candidate_answer;
       return ans ? (
-        <span className="text-sm text-gray-700">
+        <span className="text-sm text-foreground/80">
           {ans.toUpperCase()}. {getOptionText(row.original, ans)}
         </span>
       ) : (
-        <span className="text-xs text-gray-400 italic">No answer</span>
+        <span className="text-xs text-muted/70 italic">No answer</span>
       );
     },
   },
@@ -61,7 +61,7 @@ const answerSheetColumns: ColumnDef<AdminAnswerSheetRow>[] = [
     cell: ({ row }) => {
       const opt = row.original.correct_option;
       return (
-        <span className="text-sm text-gray-700">
+        <span className="text-sm text-foreground/80">
           {opt.toUpperCase()}. {getOptionText(row.original, opt)}
         </span>
       );
@@ -81,7 +81,7 @@ const answerSheetColumns: ColumnDef<AdminAnswerSheetRow>[] = [
     header: 'Family ID',
     accessorKey: 'family_id',
     cell: ({ getValue }) => (
-      <span className="font-mono text-xs text-gray-400">
+      <span className="font-mono text-xs text-muted/70">
         {getValue<string>().substring(0, 8)}…
       </span>
     ),
@@ -90,7 +90,7 @@ const answerSheetColumns: ColumnDef<AdminAnswerSheetRow>[] = [
     header: 'Ver',
     accessorKey: 'version',
     cell: ({ getValue }) => (
-      <span className="text-xs text-gray-500">v{getValue<number>()}</span>
+      <span className="text-xs text-muted">v{getValue<number>()}</span>
     ),
   },
 ];
@@ -117,7 +117,7 @@ export default function SubmissionDetailPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-border border-t-[var(--brand)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -159,15 +159,15 @@ export default function SubmissionDetailPage() {
       {/* Back navigation */}
       <button
         onClick={() => router.push(`/admin/test-configs/${result.test_config_id}/links`)}
-        className="text-sm text-blue-600 hover:underline"
+        className="text-sm text-[var(--brand)] hover:underline"
       >
         ← Back to Test Links
       </button>
 
       {/* Summary Card */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-card rounded-lg border border-border p-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-gray-900">{result.test_name}</h1>
+          <h1 className="text-xl font-semibold text-foreground">{result.test_name}</h1>
           <div className="flex items-center gap-3">
             <span className={`px-3 py-1 rounded-full text-sm font-semibold ${passClass}`}>
               {result.pass ? 'PASS' : 'FAIL'}
@@ -185,38 +185,38 @@ export default function SubmissionDetailPage() {
         </div>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <p className="text-3xl font-bold text-gray-900">{result.score_pct}%</p>
-            <p className="text-xs text-gray-500 mt-1">Score</p>
+            <p className="text-3xl font-bold text-foreground">{result.score_pct}%</p>
+            <p className="text-xs text-muted mt-1">Score</p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-gray-900">
+            <p className="text-3xl font-bold text-foreground">
               {formatTime(result.time_taken_seconds)}
             </p>
-            <p className="text-xs text-gray-500 mt-1">Time taken</p>
+            <p className="text-xs text-muted mt-1">Time taken</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-700">{submittedDate}</p>
-            <p className="text-xs text-gray-500 mt-1">Submitted</p>
+            <p className="text-sm font-medium text-foreground/80">{submittedDate}</p>
+            <p className="text-xs text-muted mt-1">Submitted</p>
           </div>
         </div>
-        <p className="mt-3 text-xs text-gray-400 text-center">
+        <p className="mt-3 text-xs text-muted/70 text-center">
           Pass threshold: {result.pass_threshold_pct}% &bull; Technology: {result.technology_name} &bull; Level: {result.difficulty}
         </p>
       </div>
 
       {/* Skill Breakdown */}
       {skillAreaEntries.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Skill Breakdown</h2>
-          <div className="divide-y divide-gray-100">
+        <div className="bg-card rounded-lg border border-border p-6">
+          <h2 className="text-base font-semibold text-foreground mb-4">Skill Breakdown</h2>
+          <div className="divide-y divide-border/50">
             {skillAreaEntries.map(([area, score]) => (
               <div key={area} className="flex items-center justify-between py-2">
-                <span className="text-sm text-gray-700">{area}</span>
+                <span className="text-sm text-foreground/80">{area}</span>
                 <div className="flex items-center gap-4">
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-muted">
                     {score.correct} / {score.total}
                   </span>
-                  <span className="text-sm font-medium text-gray-900 w-12 text-right">
+                  <span className="text-sm font-medium text-foreground w-12 text-right">
                     {score.pct}%
                   </span>
                 </div>
@@ -227,8 +227,8 @@ export default function SubmissionDetailPage() {
       )}
 
       {/* Answer Sheet */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Answer Sheet</h2>
+      <div className="bg-card rounded-lg border border-border p-6">
+        <h2 className="text-base font-semibold text-foreground mb-4">Answer Sheet</h2>
         <DataTable columns={answerSheetColumns} data={result.answer_sheet} />
       </div>
     </div>

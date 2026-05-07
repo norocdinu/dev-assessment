@@ -90,7 +90,7 @@ export default function LinksPage() {
       header: 'Token',
       accessorKey: 'token',
       cell: ({ getValue }) => (
-        <span className="font-mono text-xs text-gray-600">
+        <span className="font-mono text-xs text-foreground/70">
           {getValue<string>().substring(0, 8)}…
         </span>
       ),
@@ -128,7 +128,7 @@ export default function LinksPage() {
           {row.original.state === 'submitted' && (
             <button
               onClick={() => router.push(`/admin/submissions/${row.original.id}`)}
-              className="text-blue-600 hover:underline text-xs"
+              className="text-[var(--brand)] hover:underline text-xs"
             >
               View result
             </button>
@@ -149,23 +149,23 @@ export default function LinksPage() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Test Links</h2>
+        <h2 className="text-lg font-semibold text-foreground">Test Links</h2>
         {(isOwner || isMember) && (
           <div className="flex gap-2 items-end">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Candidate Name</label>
+              <label className="block text-sm font-medium text-foreground/80 mb-1">Candidate Name</label>
               <input
                 type="text"
                 placeholder="Optional"
                 value={candidateName}
                 onChange={(e) => setCandidateName(e.target.value)}
-                className="w-48 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                className="w-48 px-3 py-2 border border-border rounded-md text-sm"
               />
             </div>
             <button
               onClick={handleGenerate}
               disabled={generating}
-              className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-[var(--brand)] text-white text-sm rounded-md hover:bg-[var(--brand)]/90 disabled:opacity-50"
             >
               {generating ? 'Generating…' : 'Generate New Link'}
             </button>
@@ -179,19 +179,19 @@ export default function LinksPage() {
 
       {generatedUrl && (
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
-          <p className="text-sm font-medium text-gray-700 mb-2">
+          <p className="text-sm font-medium text-foreground/80 mb-2">
             New link generated — share this URL with the candidate:
           </p>
           <div className="flex gap-2">
             <input
               readOnly
               value={generatedUrl}
-              className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white font-mono"
+              className="flex-1 px-3 py-2 text-sm border border-border rounded-md bg-card font-mono"
               onFocus={(e) => e.target.select()}
             />
             <button
               onClick={handleCopy}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-4 py-2 text-sm font-medium text-foreground/80 bg-card border border-border rounded-md hover:bg-muted/10"
             >
               {copied ? 'Copied' : 'Copy'}
             </button>
@@ -200,7 +200,7 @@ export default function LinksPage() {
       )}
 
       {loading ? (
-        <p className="text-sm text-gray-400">Loading…</p>
+        <p className="text-sm text-muted/70">Loading…</p>
       ) : (
         <DataTable columns={columns} data={links} />
       )}

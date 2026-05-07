@@ -54,7 +54,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-border border-t-[var(--brand)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -69,33 +69,33 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+      <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
 
       {/* KPI Strip — 4 cards */}
       <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Total Candidates</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalCandidates}</p>
+        <div className="bg-card rounded-lg border border-border p-4">
+          <p className="text-xs text-muted uppercase tracking-wide">Total Candidates</p>
+          <p className="text-3xl font-bold text-foreground mt-1">{stats.totalCandidates}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Pass Rate</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">{stats.passRate}%</p>
+        <div className="bg-card rounded-lg border border-border p-4">
+          <p className="text-xs text-muted uppercase tracking-wide">Pass Rate</p>
+          <p className="text-3xl font-bold text-foreground mt-1">{stats.passRate}%</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Average Score</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">{stats.avgScore}%</p>
+        <div className="bg-card rounded-lg border border-border p-4">
+          <p className="text-xs text-muted uppercase tracking-wide">Average Score</p>
+          <p className="text-3xl font-bold text-foreground mt-1">{stats.avgScore}%</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Weakest Skill Area</p>
-          <p className="text-base font-semibold text-gray-900 mt-1 truncate">
+        <div className="bg-card rounded-lg border border-border p-4">
+          <p className="text-xs text-muted uppercase tracking-wide">Weakest Skill Area</p>
+          <p className="text-base font-semibold text-foreground mt-1 truncate">
             {stats.weakestSkillArea ?? '—'}
           </p>
         </div>
       </div>
 
       {/* Score Distribution Chart */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Score Distribution</h2>
+      <div className="bg-card rounded-lg border border-border p-6">
+        <h2 className="text-base font-semibold text-foreground mb-4">Score Distribution</h2>
         <ScoreDistributionChart
           bucket0_49={stats.bucket0_49}
           bucket50_59={stats.bucket50_59}
@@ -107,39 +107,39 @@ export default function DashboardPage() {
       </div>
 
       {/* Competency Breakdown Chart */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Competency Breakdown</h2>
+      <div className="bg-card rounded-lg border border-border p-6">
+        <h2 className="text-base font-semibold text-foreground mb-4">Competency Breakdown</h2>
         <CompetencyChart data={competency} />
       </div>
 
       {/* Recent Candidates Table */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Recent Candidates</h2>
+      <div className="bg-card rounded-lg border border-border p-6">
+        <h2 className="text-base font-semibold text-foreground mb-4">Recent Candidates</h2>
         {stats.recentSubmissions.length === 0 ? (
-          <p className="text-sm text-gray-400">No submissions yet.</p>
+          <p className="text-sm text-muted/70">No submissions yet.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Candidate</th>
-                <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Test</th>
-                <th className="text-right py-2 pr-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Score</th>
-                <th className="text-center py-2 pr-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Result</th>
-                <th className="text-left py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Date</th>
+              <tr className="border-b border-border/50">
+                <th className="text-left py-2 pr-4 text-xs font-medium text-muted uppercase tracking-wide">Candidate</th>
+                <th className="text-left py-2 pr-4 text-xs font-medium text-muted uppercase tracking-wide">Test</th>
+                <th className="text-right py-2 pr-4 text-xs font-medium text-muted uppercase tracking-wide">Score</th>
+                <th className="text-center py-2 pr-4 text-xs font-medium text-muted uppercase tracking-wide">Result</th>
+                <th className="text-left py-2 text-xs font-medium text-muted uppercase tracking-wide">Date</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-border/50">
               {stats.recentSubmissions.map((sub, i) => (
                 <tr key={i}>
-                  <td className="py-2 pr-4 text-gray-700">{sub.candidateName ?? '—'}</td>
-                  <td className="py-2 pr-4 text-gray-500">{sub.testConfigName}</td>
-                  <td className="py-2 pr-4 text-right font-medium text-gray-900">{sub.scorePct}%</td>
+                  <td className="py-2 pr-4 text-foreground/80">{sub.candidateName ?? '—'}</td>
+                  <td className="py-2 pr-4 text-muted">{sub.testConfigName}</td>
+                  <td className="py-2 pr-4 text-right font-medium text-foreground">{sub.scorePct}%</td>
                   <td className="py-2 pr-4 text-center">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${sub.pass ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {sub.pass ? 'PASS' : 'FAIL'}
                     </span>
                   </td>
-                  <td className="py-2 text-gray-500">
+                  <td className="py-2 text-muted">
                     {new Date(sub.submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </td>
                 </tr>
