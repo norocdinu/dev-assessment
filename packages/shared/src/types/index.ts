@@ -44,7 +44,17 @@ export interface TestConfig {
 export interface AdminUser {
   id: string;
   email: string;
+  name: string;
   role: 'owner' | 'reviewer' | 'member';
+}
+
+export interface AdminAccount {
+  id: string;
+  email: string;
+  name: string;
+  role: 'owner' | 'reviewer' | 'member';
+  created_at: string;
+  last_login_at: string | null;
 }
 
 export interface TestLink {
@@ -56,6 +66,7 @@ export interface TestLink {
   started_at: string | null;
   submitted_at: string | null;
   created_by: string;
+  candidate_name: string | null;
   created_at: string;
 }
 
