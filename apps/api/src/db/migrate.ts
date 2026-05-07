@@ -107,6 +107,24 @@ async function migrate() {
       console.log('Phase 6b: candidate_name column already present — skipping');
     }
 
+    // Phase 7: name column on admin_users
+    const [{ nameExists }] = await db`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'admin_users'
+          AND column_name = 'name'
+      ) AS "nameExists"
+    `;
+
+    if (!nameExists) {
+      console.log('Running Phase 7 migration: adding name to admin_users...');
+      await db`ALTER TABLE admin_users ADD COLUMN name TEXT NOT NULL DEFAULT ''`;
+      console.log('Phase 7: name column added');
+    } else {
+      console.log('Phase 7: name column already present — skipping');
+    }
+
     // Always apply seed data
     const seedStart = schema.indexOf('-- Seed initial data');
     if (seedStart !== -1) {
