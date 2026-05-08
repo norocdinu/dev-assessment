@@ -29,3 +29,8 @@
     color: rgb(var(--foreground));
   }
 }
+
+@media print {
+  aside { display: none !important; }
+  .md\:hidden.sticky { display: none !important; }
+}

@@ -163,10 +163,25 @@ export default function SubmissionDetailPage() {
 
   return (
     <div className="p-6 space-y-6">
+      <style>{`
+        @media print {
+          :root, .dark {
+            --background: 255 255 255;
+            --card: 255 255 255;
+            --foreground: 0 0 0;
+            --border: 200 200 200;
+            --muted: 100 100 100;
+          }
+          body { background-color: white !important; color: black !important; }
+          .overflow-x-auto { overflow: visible !important; }
+          table { width: 100% !important; }
+          h2 { page-break-after: avoid; }
+        }
+      `}</style>
       {/* Back navigation */}
       <button
         onClick={() => router.push(`/admin/test-configs/${result.test_config_id}/links`)}
-        className="text-sm text-[var(--brand)] hover:underline"
+        className="text-sm text-[var(--brand)] hover:underline print:hidden"
       >
         ← Back to Test Links
       </button>
@@ -179,11 +194,17 @@ export default function SubmissionDetailPage() {
             <span className={`px-3 py-1 rounded-full text-sm font-semibold ${passClass}`}>
               {result.pass ? 'PASS' : 'FAIL'}
             </span>
+            <button
+              onClick={() => window.print()}
+              className="px-3 py-1 text-sm text-foreground/80 border border-border rounded-md hover:bg-muted/10 print:hidden"
+            >
+              Download PDF
+            </button>
             {userRole === 'owner' && (
               <button
                 onClick={requestDelete}
                 disabled={deleting}
-                className="px-3 py-1 text-sm text-red-600 border border-red-300 rounded-md hover:bg-red-50 disabled:opacity-50"
+                className="px-3 py-1 text-sm text-red-600 border border-red-300 rounded-md hover:bg-red-50 disabled:opacity-50 print:hidden"
               >
                 {deleting ? 'Deleting…' : 'Delete Submission'}
               </button>
