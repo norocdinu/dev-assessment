@@ -8,7 +8,7 @@ A web-based multi-technology candidate assessment platform for technical hiring.
 
 A candidate receives a link and gets a fair, repeatable, automatically-graded test — every time, for any technology, at any seniority level.
 
-## Current Milestone: v1.2 — Front End Improvements
+## Current Milestone: v1.2 — Front End Improvements ✓ Complete (2026-05-08)
 
 **Goal:** Redesign the candidate test experience with a modern, mobile-first aesthetic and polish the admin app with dark mode, skeletons, consistent toasts, and actionable reporting tools.
 
@@ -50,8 +50,8 @@ All 24 v1 requirements — see [milestones/v1.0-REQUIREMENTS.md](milestones/v1.0
 - [x] Tables and cards show loading skeletons instead of spinners while data loads — Validated in Phase 11 (2026-05-07)
 - [x] All pages with no data show friendly empty state messages or illustrations — Validated in Phase 11 (2026-05-07)
 - [x] All success/error actions use sonner toast notifications (no alert() or browser dialogs) — Validated in Phase 11 (2026-05-07)
-- [ ] Owner can download a PDF summary of a candidate's submission results
-- [ ] Dashboard stats and charts can be filtered by test config and date range
+- [x] Owner can download a PDF summary of a candidate's submission results — Validated in Phase 12 (2026-05-08)
+- [x] Dashboard stats and charts can be filtered by test config and date range — Validated in Phase 12 (2026-05-08)
 - [x] Admin panel is usable on tablet-sized screens — Validated in Phase 10 (2026-05-07)
 
 ### Out of Scope
@@ -94,4 +94,4 @@ All 24 v1 requirements — see [milestones/v1.0-REQUIREMENTS.md](milestones/v1.0
 This document evolves at phase transitions and milestone boundaries.
 
 ---
-*Last updated: 2026-05-07 — Phase 11 complete (UX Pattern Library — UI-02, UI-03, UI-04 ✓); Phase 12 next (Reporting & Dashboard Filters)*
+*Last updated: 2026-05-08 — Phase 12 complete (Reporting & Dashboard Filters — RPT-01, RPT-02, RPT-03 ✓); v1.2 milestone complete — all 13 requirements delivered*
