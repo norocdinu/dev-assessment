@@ -4,7 +4,17 @@ import { authMiddleware } from '../middleware/auth.js';
 
 export async function dashboardRoutes(app: FastifyInstance) {
   // GET /dashboard/stats — cross-config aggregate KPIs + recent submissions
-  app.get('/stats', { preHandler: [authMiddleware] }, async (_request, reply) => {
+  app.get('/stats', { preHandler: [authMiddleware] }, async (request, reply) => {
+    const queryRaw = request.query as Record<string, string>;
+    const testConfigId = queryRaw.testConfigId ?? null;
+    const from = queryRaw.from ?? null;
+    const to = queryRaw.to ?? null;
+
+    const needsJoin = !!(testConfigId || from || to);
+    const configFilter = testConfigId ? db`AND tl.test_config_id = ${testConfigId}` : db``;
+    const fromFilter   = from ? db`AND tl.submitted_at >= ${from}::timestamptz` : db``;
+    const toFilter     = to   ? db`AND tl.submitted_at <= ${to}::timestamptz`   : db``;
+
     const [stats] = await db`
       SELECT
         COUNT(*)                                                                AS total_candidates,
@@ -18,14 +28,24 @@ export async function dashboardRoutes(app: FastifyInstance) {
         COUNT(*) FILTER(WHERE sr.score_pct BETWEEN 80 AND 89)                  AS bucket_80_89,
         COUNT(*) FILTER(WHERE sr.score_pct BETWEEN 90 AND 100)                 AS bucket_90_100
       FROM submission_results sr
+      ${needsJoin ? db`JOIN test_links tl ON tl.id = sr.link_id` : db``}
+      WHERE 1=1
+      ${configFilter}
+      ${fromFilter}
+      ${toFilter}
     `;
 
     const [weakest] = await db`
       SELECT
         kv.key                                                       AS area,
         ROUND(AVG((kv.value::jsonb->>'pct')::numeric))               AS avg_score
-      FROM submission_results sr,
+      FROM submission_results sr
+      ${needsJoin ? db`JOIN test_links tl ON tl.id = sr.link_id` : db``},
            jsonb_each(sr.skill_area_scores) AS kv(key, value)
+      WHERE 1=1
+      ${configFilter}
+      ${fromFilter}
+      ${toFilter}
       GROUP BY kv.key
       ORDER BY avg_score ASC
       LIMIT 1
@@ -41,6 +61,10 @@ export async function dashboardRoutes(app: FastifyInstance) {
       FROM submission_results sr
       JOIN test_links   tl ON tl.id = sr.link_id
       JOIN test_configs tc ON tc.id = tl.test_config_id
+      WHERE 1=1
+      ${configFilter}
+      ${fromFilter}
+      ${toFilter}
       ORDER BY tl.submitted_at DESC
       LIMIT 10
     `;
@@ -66,35 +90,32 @@ export async function dashboardRoutes(app: FastifyInstance) {
     });
   });
 
-  // GET /dashboard/competency — skill area averages (optional testConfigId filter)
+  // GET /dashboard/competency — skill area averages (optional testConfigId + date filter)
   app.get('/competency', { preHandler: [authMiddleware] }, async (request, reply) => {
     const queryRaw = request.query as Record<string, string>;
     const testConfigId = queryRaw.testConfigId ?? null;
+    const from = queryRaw.from ?? null;
+    const to   = queryRaw.to   ?? null;
 
-    let rows;
-    if (testConfigId) {
-      rows = await db`
-        SELECT
-          kv.key                                                       AS area,
-          ROUND(AVG((kv.value::jsonb->>'pct')::numeric))               AS avg_score
-        FROM submission_results sr
-        JOIN test_links tl ON tl.id = sr.link_id,
-             jsonb_each(sr.skill_area_scores) AS kv(key, value)
-        WHERE tl.test_config_id = ${testConfigId}
-        GROUP BY kv.key
-        ORDER BY avg_score DESC
-      `;
-    } else {
-      rows = await db`
-        SELECT
-          kv.key                                                       AS area,
-          ROUND(AVG((kv.value::jsonb->>'pct')::numeric))               AS avg_score
-        FROM submission_results sr,
-             jsonb_each(sr.skill_area_scores) AS kv(key, value)
-        GROUP BY kv.key
-        ORDER BY avg_score DESC
-      `;
-    }
+    const needsJoin  = !!(testConfigId || from || to);
+    const configFilter = testConfigId ? db`AND tl.test_config_id = ${testConfigId}` : db``;
+    const fromFilter   = from ? db`AND tl.submitted_at >= ${from}::timestamptz` : db``;
+    const toFilter     = to   ? db`AND tl.submitted_at <= ${to}::timestamptz`   : db``;
+
+    const rows = await db`
+      SELECT
+        kv.key                                                       AS area,
+        ROUND(AVG((kv.value::jsonb->>'pct')::numeric))               AS avg_score
+      FROM submission_results sr
+      ${needsJoin ? db`JOIN test_links tl ON tl.id = sr.link_id` : db``},
+           jsonb_each(sr.skill_area_scores) AS kv(key, value)
+      WHERE 1=1
+      ${configFilter}
+      ${fromFilter}
+      ${toFilter}
+      GROUP BY kv.key
+      ORDER BY avg_score DESC
+    `;
 
     return reply.status(200).send(
       rows.map(r => ({
