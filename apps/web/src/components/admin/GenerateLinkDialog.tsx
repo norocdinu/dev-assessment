@@ -154,7 +154,7 @@ export function GenerateLinkDialog({
       onClick={onClose}
     >
       <div
-        className="flex w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+        className="flex max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl sm:min-h-[34rem]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -167,7 +167,7 @@ export function GenerateLinkDialog({
           aria-hidden
         >
           <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/10" />
-          <div className="absolute inset-x-0 bottom-0 p-6 text-white">
+          <div className="absolute inset-x-0 bottom-0 p-8 text-white">
             <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/70">
               Assessment invite
             </p>
@@ -188,11 +188,11 @@ export function GenerateLinkDialog({
           {!url ? (
             // Step 1 — candidate name (required)
             <>
-              <div className="p-8">
-                <h2 className="text-lg font-semibold text-foreground">Generate assessment link</h2>
+              <div className="p-10">
+                <h2 className="text-xl font-semibold text-foreground">Generate assessment link</h2>
                 <p className="mt-1 text-sm text-muted">{testConfigName}</p>
 
-                <div className="mt-7">
+                <div className="mt-9">
                   <label htmlFor="candidate-name" className="mb-1.5 block text-sm font-medium text-foreground/80">
                     Candidate name <span className="text-red-500">*</span>
                   </label>
@@ -208,7 +208,7 @@ export function GenerateLinkDialog({
                       if (e.key === 'Enter') handleGenerate();
                     }}
                     placeholder="e.g. Jane Smith"
-                    className="w-full rounded-md border border-border bg-card px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand)]"
+                    className="w-full rounded-md border border-border bg-card px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand)]"
                   />
                   <p className="mt-2 text-xs text-muted">
                     Identifies this candidate&apos;s submission. They don&apos;t need to log in.
@@ -216,7 +216,7 @@ export function GenerateLinkDialog({
                   {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
                 </div>
               </div>
-              <div className="mt-auto flex justify-end gap-3 border-t border-border p-6">
+              <div className="mt-auto flex justify-end gap-3 border-t border-border p-8">
                 <button
                   onClick={onClose}
                   className="rounded-md border border-border px-4 py-2 text-sm text-foreground/70 transition-colors hover:bg-muted/10"
@@ -235,7 +235,7 @@ export function GenerateLinkDialog({
           ) : (
             // Step 2 — link + share
             <>
-              <div className="p-8">
+              <div className="p-10">
                 <div className="mb-4 flex items-center gap-2 text-sm font-medium text-green-600">
                   <Check className="h-4 w-4" /> Link ready for {trimmedName}
                 </div>
@@ -244,11 +244,11 @@ export function GenerateLinkDialog({
                     readOnly
                     value={url}
                     onFocus={(e) => e.target.select()}
-                    className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2.5 font-mono text-sm text-foreground/80"
+                    className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-3 font-mono text-sm text-foreground/80"
                   />
                   <button
                     onClick={copyLink}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted/10"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 py-3 text-sm font-medium transition-colors hover:bg-muted/10"
                   >
                     {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                     {copied ? 'Copied' : 'Copy'}
@@ -269,7 +269,7 @@ export function GenerateLinkDialog({
                   )}
                 </div>
               </div>
-              <div className="mt-auto flex justify-between gap-3 border-t border-border p-6">
+              <div className="mt-auto flex justify-between gap-3 border-t border-border p-8">
                 <button
                   onClick={() => {
                     setUrl('');
@@ -309,7 +309,7 @@ function ShareButton({
   return (
     <button
       onClick={onClick}
-      className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-card px-3 py-2.5 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted/10"
+      className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-card px-3 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted/10"
       style={accent ? ({ color: accent } as React.CSSProperties) : undefined}
     >
       {icon}
