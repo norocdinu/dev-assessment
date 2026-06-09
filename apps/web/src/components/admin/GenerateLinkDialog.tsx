@@ -154,7 +154,7 @@ export function GenerateLinkDialog({
       onClick={onClose}
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl sm:min-h-[34rem]"
+        className="flex max-h-[90vh] w-full max-w-[54rem] overflow-hidden rounded-2xl border border-border bg-card shadow-2xl sm:min-h-[30rem]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
