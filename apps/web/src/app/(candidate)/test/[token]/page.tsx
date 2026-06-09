@@ -202,6 +202,7 @@ export default function TestPage() {
   const currentQuestion = questions[currentIndex];
   const answeredCount = Object.keys(answers).length;
   const unansweredCount = questions.length - answeredCount;
+  const isLast = currentIndex === questions.length - 1;
 
   return (
     <div className="candidate-shell">
@@ -231,22 +232,41 @@ export default function TestPage() {
           onAnswer={(ans) => handleAnswer(currentQuestion.id, ans)}
         />
 
-        {/* Previous / Next — equal-weight outline controls */}
-        <div className="mt-5 flex items-center justify-between gap-3">
+        {/* Previous / Next — prominent controls; Next becomes Submit on the last question */}
+        <div className="mt-6 flex items-center justify-between gap-3">
           <button
             onClick={() => handleNavigate(currentIndex - 1)}
             disabled={currentIndex === 0}
-            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-xl border-2 border-border bg-card px-5 py-3 text-sm font-semibold text-foreground shadow-sm transition-colors hover:border-foreground/25 hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border disabled:hover:bg-card sm:px-6"
           >
-            <span aria-hidden>←</span> Previous
+            <span aria-hidden className="text-base leading-none">←</span> Previous
           </button>
-          <button
-            onClick={() => handleNavigate(currentIndex + 1)}
-            disabled={currentIndex === questions.length - 1}
-            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-3 text-sm font-medium text-foreground transition-colors hover:border-[rgb(var(--brand-rgb)/0.5)] hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Next <span aria-hidden className="text-[var(--brand)]">→</span>
-          </button>
+
+          {!isLast ? (
+            <button
+              onClick={() => handleNavigate(currentIndex + 1)}
+              className="inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-7 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:px-9"
+            >
+              Next <span aria-hidden className="text-base leading-none">→</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleSubmitClick}
+              disabled={submitting}
+              className="inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgb(var(--brand-rgb)/0.35)] ring-1 ring-[rgb(var(--brand-rgb)/0.4)] transition hover:opacity-90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:px-9"
+            >
+              {submitting ? (
+                'Submitting…'
+              ) : (
+                <>
+                  Submit test
+                  <svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                </>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Question map */}
@@ -268,7 +288,8 @@ export default function TestPage() {
           />
         </section>
 
-        {/* Submit — the single brand-accented terminal action */}
+        {/* Submit status + early-submit affordance (the last question's primary
+            Submit lives in the nav row above) */}
         <div className="mt-8 flex flex-col items-stretch gap-3 border-t border-border pt-7 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted">
             {unansweredCount > 0 ? (
@@ -277,7 +298,7 @@ export default function TestPage() {
                 {unansweredCount === 1 ? 'question' : 'questions'} still unanswered.
               </>
             ) : (
-              <>All questions answered. You're ready to submit.</>
+              <>All questions answered{isLast ? ' — submit when ready.' : '. You can submit any time.'}</>
             )}
           </p>
           <div className="flex flex-col items-stretch gap-2 sm:items-end">
@@ -296,13 +317,15 @@ export default function TestPage() {
                 </button>
               </div>
             )}
-            <button
-              onClick={handleSubmitClick}
-              disabled={submitting}
-              className="rounded-xl bg-[var(--brand)] px-7 py-3 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              {submitting ? 'Submitting…' : 'Submit test'}
-            </button>
+            {!isLast && (
+              <button
+                onClick={handleSubmitClick}
+                disabled={submitting}
+                className="rounded-xl border-2 border-[rgb(var(--brand-rgb)/0.4)] bg-card px-6 py-3 text-sm font-semibold text-[var(--brand)] shadow-sm transition-colors hover:bg-[rgb(var(--brand-rgb)/0.06)] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                {submitting ? 'Submitting…' : 'Submit test'}
+              </button>
+            )}
           </div>
         </div>
       </main>
