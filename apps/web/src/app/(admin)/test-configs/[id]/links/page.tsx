@@ -130,7 +130,7 @@ export default function LinksPage() {
         <div className="flex gap-2">
           {row.original.state === 'submitted' && (
             <button
-              onClick={() => router.push(`/admin/submissions/${row.original.id}`)}
+              onClick={() => router.push(`/submissions/${row.original.id}`)}
               className="text-[var(--brand)] hover:underline text-xs"
             >
               View result

@@ -180,7 +180,7 @@ export default function SubmissionDetailPage() {
       `}</style>
       {/* Back navigation */}
       <button
-        onClick={() => router.push(`/admin/test-configs/${result.test_config_id}/links`)}
+        onClick={() => router.push(`/test-configs/${result.test_config_id}/links`)}
         className="text-sm text-[var(--brand)] hover:underline print:hidden"
       >
         ← Back to Test Links
