@@ -119,16 +119,25 @@ export async function submissionRoutes(app: FastifyInstance) {
     const { testConfigId, dateFrom, dateTo, difficulty, page, pageSize } = query.data;
     const offset = (page - 1) * pageSize;
 
+    // Conditional fragments: emit a filter only when set. Avoids binding bare
+    // NULL parameters (e.g. `$1 IS NULL`), which Postgres rejects with
+    // "could not determine data type of parameter".
+    const configFilter = testConfigId ? db`AND tl.test_config_id = ${testConfigId}` : db``;
+    const fromFilter   = dateFrom ? db`AND tl.submitted_at >= ${dateFrom}::timestamptz` : db``;
+    const toFilter     = dateTo   ? db`AND tl.submitted_at <= ${dateTo}::timestamptz`   : db``;
+    const diffFilter   = difficulty ? db`AND tc.difficulty = ${difficulty}` : db``;
+
     const [countRow] = await db`
       SELECT COUNT(*) AS count
       FROM submission_results sr
       JOIN test_links   tl ON tl.id = sr.link_id
       JOIN test_configs tc ON tc.id = tl.test_config_id
       JOIN technologies t  ON t.id  = tc.technology_id
-      WHERE (${testConfigId ?? null} IS NULL OR tl.test_config_id = ${testConfigId ?? null})
-        AND (${dateFrom ?? null} IS NULL OR tl.submitted_at >= ${dateFrom ?? null}::timestamptz)
-        AND (${dateTo ?? null} IS NULL OR tl.submitted_at <= ${dateTo ?? null}::timestamptz)
-        AND (${difficulty ?? null} IS NULL OR tc.difficulty = ${difficulty ?? null})
+      WHERE 1=1
+      ${configFilter}
+      ${fromFilter}
+      ${toFilter}
+      ${diffFilter}
     `;
 
     const rows = await db`
@@ -148,10 +157,11 @@ export async function submissionRoutes(app: FastifyInstance) {
       JOIN test_links   tl ON tl.id = sr.link_id
       JOIN test_configs tc ON tc.id = tl.test_config_id
       JOIN technologies t  ON t.id  = tc.technology_id
-      WHERE (${testConfigId ?? null} IS NULL OR tl.test_config_id = ${testConfigId ?? null})
-        AND (${dateFrom ?? null} IS NULL OR tl.submitted_at >= ${dateFrom ?? null}::timestamptz)
-        AND (${dateTo ?? null} IS NULL OR tl.submitted_at <= ${dateTo ?? null}::timestamptz)
-        AND (${difficulty ?? null} IS NULL OR tc.difficulty = ${difficulty ?? null})
+      WHERE 1=1
+      ${configFilter}
+      ${fromFilter}
+      ${toFilter}
+      ${diffFilter}
       ORDER BY tl.submitted_at DESC
       LIMIT ${pageSize} OFFSET ${offset}
     `;

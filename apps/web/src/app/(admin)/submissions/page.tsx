@@ -14,6 +14,7 @@ import {
   type Row,
 } from '@tanstack/react-table';
 import { api } from '@/lib/api';
+import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ClipboardList } from 'lucide-react';
@@ -85,6 +86,11 @@ export default function SubmissionsPage() {
       const res = await api.get(`/admin/submissions?${params}`);
       setSubmissions(res.data.data);
       setTotal(res.data.total);
+    } catch (err) {
+      console.error('Failed to load submissions', err);
+      setSubmissions([]);
+      setTotal(0);
+      toast.error('Failed to load submissions. Please try again.');
     } finally {
       setLoading(false);
     }
