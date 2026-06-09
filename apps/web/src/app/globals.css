@@ -34,3 +34,68 @@
   aside { display: none !important; }
   .md\:hidden.sticky { display: none !important; }
 }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Candidate "Editorial Exam Hall" theme
+   Scoped to .candidate-root so the admin app's tokens stay untouched.
+   Warm paper → deep ink. The white-label --brand color is the single accent.
+   ─────────────────────────────────────────────────────────────────────────── */
+.candidate-root {
+  --background: 250 249 246;   /* warm paper  #FAF9F6 */
+  --card: 255 255 255;         /* #ffffff */
+  --surface: 246 244 239;      /* recessed tiles #F6F4EF */
+  --foreground: 26 25 24;      /* ink #1A1918 */
+  --muted: 122 117 110;        /* warm grey #7A756E */
+  --border: 231 227 220;       /* #E7E3DC */
+  --success: 13 148 110;       /* calm emerald #0D946E */
+  --danger: 192 70 70;         /* muted red #C04646 */
+
+  font-family: var(--font-hanken), system-ui, sans-serif;
+  color: rgb(var(--foreground));
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'ss01';
+}
+
+.dark .candidate-root {
+  --background: 13 13 15;       /* near-black #0D0D0F */
+  --card: 22 22 26;            /* #16161A */
+  --surface: 28 28 33;         /* #1C1C21 */
+  --foreground: 237 234 228;   /* warm white #EDEAE4 */
+  --muted: 142 137 129;        /* #8E8981 */
+  --border: 39 39 45;          /* #27272D */
+  --success: 52 199 153;
+  --danger: 232 116 116;
+}
+
+/* Atmospheric shell: faint dot grid + a single soft brand glow. Calm, not loud. */
+.candidate-shell {
+  position: relative;
+  min-height: 100vh;
+  background-color: rgb(var(--background));
+  background-image:
+    radial-gradient(circle at top,
+      rgb(var(--brand-rgb) / 0.05), transparent 55%),
+    radial-gradient(rgb(var(--border) / 0.7) 1px, transparent 1px);
+  background-size: 100% 100%, 22px 22px;
+  background-position: center top, center top;
+}
+
+/* Staggered, restrained entrance. Content is always visible if motion is off. */
+@media (prefers-reduced-motion: no-preference) {
+  .anim-rise {
+    opacity: 0;
+    animation: candidate-rise 0.55s cubic-bezier(0.22, 0.7, 0.2, 1) forwards;
+    animation-delay: var(--d, 0ms);
+  }
+}
+
+@keyframes candidate-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes candidate-tick {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}

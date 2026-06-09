@@ -5,5 +5,9 @@ export default function CandidateLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <CandidateThemeProvider>{children}</CandidateThemeProvider>;
+  return (
+    <CandidateThemeProvider>
+      <div className="candidate-root">{children}</div>
+    </CandidateThemeProvider>
+  );
 }

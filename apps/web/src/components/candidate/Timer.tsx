@@ -18,30 +18,31 @@ export function Timer({ remainingMs }: TimerProps) {
   const isUrgent = remainingMs <= 300000; // under 5 minutes
   const isCritical = remainingMs <= 60000; // under 1 minute
 
-  const colorClass = isCritical
-    ? 'text-red-500 animate-pulse'
+  // Calm colour escalation: brand → amber → danger. No flashing except the
+  // single status dot in the final minute, which earns the attention.
+  const tone = isCritical
+    ? 'border-danger/40 bg-danger/5 text-danger'
     : isUrgent
-    ? 'text-amber-500'
-    : 'text-[var(--brand)]';
+    ? 'border-amber-500/40 bg-amber-500/5 text-amber-600 dark:text-amber-400'
+    : 'border-border bg-card text-foreground';
+
+  const dotTone = isCritical ? 'bg-danger' : isUrgent ? 'bg-amber-500' : 'bg-[var(--brand)]';
 
   return (
     <div
-      className={`flex items-center gap-2 ${colorClass}`}
+      className={`flex items-center gap-2.5 rounded-full border px-3 py-1.5 transition-colors ${tone}`}
       aria-live="polite"
       aria-label={`Time remaining: ${minutes} minutes ${seconds} seconds`}
     >
-      <svg
-        className="w-4 h-4 shrink-0"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2}
-        aria-hidden="true"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <polyline points="12 6 12 12 16 14" />
-      </svg>
-      <span className="text-xl font-bold tabular-nums">{display}</span>
+      <span
+        aria-hidden
+        className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotTone}`}
+        style={isCritical ? { animation: 'candidate-tick 1s steps(1) infinite' } : undefined}
+      />
+      <span className="hidden font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-muted sm:inline">
+        Time
+      </span>
+      <span className="font-mono text-[17px] font-medium leading-none tabular-nums">{display}</span>
     </div>
   );
 }

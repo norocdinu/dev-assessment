@@ -7,11 +7,10 @@ import { QuestionCard } from '@/components/candidate/QuestionCard';
 import { QuestionNav } from '@/components/candidate/QuestionNav';
 import { SubmitModal } from '@/components/candidate/SubmitModal';
 import { ProgressBar } from '@/components/candidate/ProgressBar';
+import { Brandmark } from '@/components/candidate/Brandmark';
 import type { CandidateQuestion, LocalSession } from '@dev-assessment/shared';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-const BRAND_NAME = process.env.NEXT_PUBLIC_BRAND_NAME ?? 'Dev Assessment';
-const BRAND_LOGO = process.env.NEXT_PUBLIC_BRAND_LOGO_URL ?? null;
 const DURATION_MS = 30 * 60 * 1000;
 
 function getLocalSession(token: string): LocalSession | null {
@@ -189,10 +188,10 @@ export default function TestPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-border border-t-[var(--brand)] rounded-full animate-spin mx-auto" />
-          <p className="mt-4 text-sm text-muted">Loading your test…</p>
+      <div className="candidate-shell flex items-center justify-center">
+        <div className="flex flex-col items-center text-center">
+          <div className="h-9 w-9 animate-spin rounded-full border-2 border-border border-t-[var(--brand)]" />
+          <p className="mt-5 font-serif text-lg italic text-muted">Preparing your assessment…</p>
         </div>
       </div>
     );
@@ -205,40 +204,60 @@ export default function TestPage() {
   const unansweredCount = questions.length - answeredCount;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Sticky header */}
-      <header className="sticky top-0 z-10 bg-card border-b border-border">
-        <div className="px-4 py-3 flex items-center justify-between">
-          {/* Brand */}
-          <div className="flex items-center gap-2">
-            {BRAND_LOGO ? (
-              <img src={BRAND_LOGO} alt={BRAND_NAME} className="h-7 object-contain" />
-            ) : (
-              <span className="text-sm font-bold text-foreground">{BRAND_NAME}</span>
-            )}
-          </div>
-          {/* Timer + question counter */}
-          <div className="flex items-center gap-4">
-            <span className="text-xs font-medium text-muted hidden sm:block">
-              {currentIndex + 1} / {questions.length}
+    <div className="candidate-shell">
+      {/* Sticky header — brand, exam clock, live progress */}
+      <header className="sticky top-0 z-20 border-b border-border bg-card/85 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4 sm:px-6">
+          <Brandmark />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <span className="hidden font-mono text-xs font-medium tabular-nums text-muted sm:inline">
+              {String(currentIndex + 1).padStart(2, '0')}
+              <span className="text-muted/50"> / {String(questions.length).padStart(2, '0')}</span>
             </span>
             <Timer remainingMs={Math.max(0, remainingMs)} />
           </div>
         </div>
-        {/* Progress bar — full width, flush below header */}
         <ProgressBar answered={answeredCount} total={questions.length} />
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        {/* Question navigation */}
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-medium text-muted">
-              Question {currentIndex + 1} of {questions.length}
-            </p>
-            <p className="text-xs text-muted">
-              {answeredCount} answered
-            </p>
+      <main className="mx-auto max-w-3xl px-4 pb-24 pt-7 sm:px-6">
+        {/* Question card — keyed so it re-animates on navigation */}
+        <QuestionCard
+          key={currentQuestion.id}
+          question={currentQuestion}
+          questionNumber={currentIndex + 1}
+          totalQuestions={questions.length}
+          selectedAnswer={answers[currentQuestion.id]}
+          onAnswer={(ans) => handleAnswer(currentQuestion.id, ans)}
+        />
+
+        {/* Previous / Next — equal-weight outline controls */}
+        <div className="mt-5 flex items-center justify-between gap-3">
+          <button
+            onClick={() => handleNavigate(currentIndex - 1)}
+            disabled={currentIndex === 0}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <span aria-hidden>←</span> Previous
+          </button>
+          <button
+            onClick={() => handleNavigate(currentIndex + 1)}
+            disabled={currentIndex === questions.length - 1}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-3 text-sm font-medium text-foreground transition-colors hover:border-[rgb(var(--brand-rgb)/0.5)] hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next <span aria-hidden className="text-[var(--brand)]">→</span>
+          </button>
+        </div>
+
+        {/* Question map */}
+        <section className="mt-10 rounded-2xl border border-border bg-card/60 p-5 sm:p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted">
+              Question map
+            </h2>
+            <span className="font-mono text-[11px] tabular-nums text-muted">
+              <span className="text-foreground">{answeredCount}</span> / {questions.length} answered
+            </span>
           </div>
           <QuestionNav
             totalQuestions={questions.length}
@@ -247,68 +266,46 @@ export default function TestPage() {
             questionIds={questions.map((q) => q.id)}
             onNavigate={handleNavigate}
           />
-        </div>
+        </section>
 
-        {/* Question card */}
-        <div className="mt-4">
-          <QuestionCard
-            question={currentQuestion}
-            questionNumber={currentIndex + 1}
-            totalQuestions={questions.length}
-            selectedAnswer={answers[currentQuestion.id]}
-            onAnswer={(ans) => handleAnswer(currentQuestion.id, ans)}
-          />
+        {/* Submit — the single brand-accented terminal action */}
+        <div className="mt-8 flex flex-col items-stretch gap-3 border-t border-border pt-7 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted">
+            {unansweredCount > 0 ? (
+              <>
+                <span className="font-medium text-foreground">{unansweredCount}</span>{' '}
+                {unansweredCount === 1 ? 'question' : 'questions'} still unanswered.
+              </>
+            ) : (
+              <>All questions answered. You're ready to submit.</>
+            )}
+          </p>
+          <div className="flex flex-col items-stretch gap-2 sm:items-end">
+            {submitError && (
+              <div className="flex items-center justify-end gap-3">
+                <p className="text-sm text-danger">{submitError}</p>
+                <button
+                  onClick={() => {
+                    submittingRef.current = false;
+                    setSubmitting(false);
+                    doSubmit();
+                  }}
+                  className="rounded-lg bg-[var(--brand)] px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+            <button
+              onClick={handleSubmitClick}
+              disabled={submitting}
+              className="rounded-xl bg-[var(--brand)] px-7 py-3 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              {submitting ? 'Submitting…' : 'Submit test'}
+            </button>
+          </div>
         </div>
-
-        {/* Navigation buttons */}
-        <div className="flex items-center justify-between mt-5">
-          <button
-            onClick={() => handleNavigate(currentIndex - 1)}
-            disabled={currentIndex === 0}
-            className="px-5 py-3 text-sm font-medium text-foreground bg-card border border-border rounded-xl hover:bg-border/40 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            ← Previous
-          </button>
-          <button
-            onClick={() => handleNavigate(currentIndex + 1)}
-            disabled={currentIndex === questions.length - 1}
-            className="px-5 py-3 text-sm font-medium text-white bg-[var(--brand)] rounded-xl hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
-          >
-            Next →
-          </button>
-        </div>
-
-        {/* Submit */}
-        <div className="mt-6 flex flex-col items-end">
-          {submitError && (
-            <div className="mb-3 flex items-center gap-3">
-              <p className="text-sm text-red-500">{submitError}</p>
-              <button
-                onClick={() => {
-                  submittingRef.current = false;
-                  setSubmitting(false);
-                  doSubmit();
-                }}
-                className="px-3 py-1.5 text-sm font-medium text-white bg-[var(--brand)] rounded-lg hover:opacity-90"
-              >
-                Retry
-              </button>
-            </div>
-          )}
-          <button
-            onClick={handleSubmitClick}
-            disabled={submitting}
-            className="px-6 py-3 bg-[var(--brand)] text-white text-sm font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
-          >
-            {submitting ? 'Submitting…' : 'Submit Test'}
-          </button>
-          {unansweredCount > 0 && (
-            <p className="text-xs text-muted mt-1.5">
-              {unansweredCount} {unansweredCount === 1 ? 'question' : 'questions'} not yet answered
-            </p>
-          )}
-        </div>
-      </div>
+      </main>
 
       {showModal && (
         <SubmitModal

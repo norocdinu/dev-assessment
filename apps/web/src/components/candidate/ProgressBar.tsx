@@ -8,7 +8,7 @@ export function ProgressBar({ answered, total }: ProgressBarProps) {
 
   return (
     <div
-      className="h-1 w-full bg-border"
+      className="h-[3px] w-full bg-border/60"
       role="progressbar"
       aria-valuenow={pct}
       aria-valuemin={0}
@@ -16,8 +16,11 @@ export function ProgressBar({ answered, total }: ProgressBarProps) {
       aria-label={`${answered} of ${total} questions answered`}
     >
       <div
-        className="h-full bg-[var(--brand)] transition-all duration-300 ease-out"
-        style={{ width: `${pct}%` }}
+        className="h-full rounded-r-full bg-[var(--brand)] transition-[width] duration-500 ease-out"
+        style={{
+          width: `${pct}%`,
+          boxShadow: pct > 0 ? '0 0 8px rgb(var(--brand-rgb) / 0.5)' : 'none',
+        }}
       />
     </div>
   );
