@@ -22,6 +22,9 @@ const DIFFICULTY_BADGE: Record<string, string> = {
   senior: 'bg-violet-500/10 text-violet-600 border-violet-500/20',
 };
 
+// Sort order for cards within a technology group (junior → mid → senior).
+const SENIORITY_RANK: Record<string, number> = { junior: 0, mid: 1, senior: 2 };
+
 export default function TestConfigsPage() {
   const router = useRouter();
   const [configs, setConfigs] = useState<TestConfigRow[]>([]);
@@ -65,6 +68,13 @@ export default function TestConfigsPage() {
       const list = map.get(c.technology_name) ?? [];
       list.push(c);
       map.set(c.technology_name, list);
+    }
+    for (const list of map.values()) {
+      list.sort(
+        (a, b) =>
+          (SENIORITY_RANK[a.difficulty] ?? 99) - (SENIORITY_RANK[b.difficulty] ?? 99) ||
+          a.name.localeCompare(b.name)
+      );
     }
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   }, [configs]);
