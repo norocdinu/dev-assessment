@@ -1,11 +1,7 @@
 import postgres from 'postgres';
+import { env } from '../config/env.js';
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error('DATABASE_URL environment variable is required');
-}
-
-export const db = postgres(connectionString, {
+export const db = postgres(env.DATABASE_URL, {
   max: 10,
   idle_timeout: 30,
 });

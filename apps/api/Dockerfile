@@ -41,8 +41,9 @@ RUN npm prune --omit=dev
 # Copy compiled output (shared is types-only, erased at compile time — no dist needed)
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 
-# schema.sql is read at runtime via __dirname (resolves to dist/db/)
-COPY apps/api/src/db/schema.sql ./apps/api/dist/db/schema.sql
+# Migration .sql files are read at runtime via __dirname (tsc does not emit
+# non-TS assets, so copy them into the compiled db/migrations directory)
+COPY apps/api/src/db/migrations ./apps/api/dist/db/migrations
 
 # Entrypoint: migrate then start (exec so node is PID 1 and receives signals)
 COPY apps/api/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

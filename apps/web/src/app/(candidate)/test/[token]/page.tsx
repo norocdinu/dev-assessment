@@ -11,7 +11,8 @@ import { Brandmark } from '@/components/candidate/Brandmark';
 import type { CandidateQuestion, LocalSession } from '@dev-assessment/shared';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-const DURATION_MS = 30 * 60 * 1000;
+// Fallback only — the authoritative duration comes from the session payload.
+const DEFAULT_DURATION_MS = 30 * 60 * 1000;
 
 function getLocalSession(token: string): LocalSession | null {
   try {
@@ -39,7 +40,8 @@ export default function TestPage() {
   const [questions, setQuestions] = useState<CandidateQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, 'a' | 'b' | 'c' | 'd'>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [remainingMs, setRemainingMs] = useState(DURATION_MS);
+  const [remainingMs, setRemainingMs] = useState(DEFAULT_DURATION_MS);
+  const [durationMs, setDurationMs] = useState(DEFAULT_DURATION_MS);
   const [serverStartedAtMs, setServerStartedAtMs] = useState(0);
   const [clockOffset, setClockOffset] = useState(0);
   const [showModal, setShowModal] = useState(false);
@@ -88,7 +90,7 @@ export default function TestPage() {
     if (questions.length === 0 || serverStartedAtMs === 0) return;
 
     const interval = setInterval(() => {
-      const remaining = DURATION_MS - (Date.now() + clockOffset - serverStartedAtMs);
+      const remaining = durationMs - (Date.now() + clockOffset - serverStartedAtMs);
       setRemainingMs(remaining);
       if (remaining <= 0) {
         clearInterval(interval);
@@ -97,7 +99,7 @@ export default function TestPage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [serverStartedAtMs, clockOffset, questions.length, doSubmit]);
+  }, [serverStartedAtMs, clockOffset, questions.length, durationMs, doSubmit]);
 
   useEffect(() => {
     if (!token) return;
@@ -121,7 +123,9 @@ export default function TestPage() {
         }
 
         const data = await res.json();
-        const { started_at, server_now, questions: qs } = data;
+        const { started_at, server_now, duration_ms, questions: qs } = data;
+        const sessionDuration = duration_ms ?? DEFAULT_DURATION_MS;
+        setDurationMs(sessionDuration);
 
         const offset = new Date(server_now).getTime() - Date.now();
         setClockOffset(offset);
@@ -149,7 +153,7 @@ export default function TestPage() {
           currentQuestionIndex: restoredIndex,
         });
 
-        const initialRemaining = DURATION_MS - (Date.now() + offset - startedAtMs);
+        const initialRemaining = sessionDuration - (Date.now() + offset - startedAtMs);
         setRemainingMs(initialRemaining);
       } catch {
         router.push(`/test/${token}/expired?state=notfound`);

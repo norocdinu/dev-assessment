@@ -1,7 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { db } from '../db/client.js';
+import { env } from '../config/env.js';
 import { seededSample } from '../lib/rng.js';
+
+const DURATION_MS = env.TEST_DURATION_MINUTES * 60 * 1000;
 
 const submitSchema = z.object({
   answers: z.record(z.string().uuid(), z.enum(['a', 'b', 'c', 'd'])),
@@ -63,13 +66,14 @@ export async function candidateRoutes(app: FastifyInstance) {
         SET state = 'active', started_at = ${serverNow}
         WHERE id = ${link.id} AND state = 'created'
       `;
-      return reply.status(200).send({ started_at: serverNow, server_now: serverNow, questions });
+      return reply.status(200).send({ started_at: serverNow, server_now: serverNow, duration_ms: DURATION_MS, questions });
     }
 
     // state === 'active' — return existing started_at
     return reply.status(200).send({
       started_at: link.started_at,
       server_now: serverNow,
+      duration_ms: DURATION_MS,
       questions,
     });
   });
@@ -102,7 +106,7 @@ export async function candidateRoutes(app: FastifyInstance) {
 
     // Server-side hard deadline enforcement
     const [{ past_deadline }] = await db`
-      SELECT (NOW() > started_at + INTERVAL '30 minutes') AS past_deadline
+      SELECT (NOW() > started_at + make_interval(mins => ${env.TEST_DURATION_MINUTES})) AS past_deadline
       FROM test_links WHERE id = ${link.id}
     `;
 

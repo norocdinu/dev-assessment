@@ -83,6 +83,7 @@ export interface CandidateQuestion {
 export interface CandidateSession {
   started_at: string;
   server_now: string;
+  duration_ms: number;
   questions: CandidateQuestion[];
 }
 
