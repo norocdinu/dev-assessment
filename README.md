@@ -32,6 +32,7 @@ A web-based multi-technology candidate assessment platform for technical hiring.
 | **Auth** | JWT (httpOnly cookie), bcrypt |
 | **Validation** | Zod |
 | **Monorepo** | npm workspaces |
+| **Deployment** | Docker (multi-stage), Render Blueprint (`render.yaml`) |
 
 ---
 
@@ -40,15 +41,24 @@ A web-based multi-technology candidate assessment platform for technical hiring.
 ```
 dev-assessment/
 ├── apps/
-│   ├── api/          # Fastify REST API (port 3001)
-│   └── web/          # Next.js admin + candidate app (port 3000)
+│   ├── api/                 # Fastify REST API (port 3001)
+│   │   ├── src/
+│   │   │   ├── config/      # validated env + CORS allow-list
+│   │   │   ├── app.ts       # buildApp() — Fastify wiring (no listen)
+│   │   │   ├── index.ts     # entrypoint (listen + graceful shutdown)
+│   │   │   ├── db/          # client, migration runner, ordered migrations/
+│   │   │   ├── lib/         # cross-cutting (errors, audit, rng)
+│   │   │   ├── middleware/  # auth, rbac
+│   │   │   └── routes/      # one Fastify plugin per resource
+│   │   └── Dockerfile
+│   └── web/                 # Next.js admin + candidate app (port 3000)
 └── packages/
-    └── shared/       # Shared TypeScript types
+    └── shared/              # Shared TypeScript types
 ```
 
 **Route groups in `apps/web`:**
-- `(admin)` — Protected admin pages (dashboard, questions, submissions, accounts, settings)
-- `(test)` — Candidate-facing test experience (zero auth required, link-based)
+- `(admin)` — Protected admin pages (dashboard, questions, submissions, test-configs, accounts, settings)
+- `(candidate)` — Candidate-facing test experience (zero auth required, link-based)
 
 ---
 
@@ -58,7 +68,6 @@ dev-assessment/
 
 - Node.js 20+
 - PostgreSQL 14+
-- Redis (used by session/cache layer)
 
 ### Setup
 
@@ -79,6 +88,19 @@ npm run dev
 
 The admin app runs at `http://localhost:3000` and the API at `http://localhost:3001`.
 
+### Deployment
+
+Deployed via the root **`render.yaml`** Blueprint — managed PostgreSQL plus Dockerized API and web services. On boot the API runs ordered migrations (`apps/api/src/db/migrations/`), seeds the bootstrap admin, and exposes `GET /health`. Key environment variables (validated at startup):
+
+| Var | Notes |
+|-----|-------|
+| `DATABASE_URL` | Postgres connection string |
+| `JWT_SECRET` | min 32 chars |
+| `WEB_URL` | candidate/admin web origin (CORS) |
+| `CORS_ORIGINS` | optional extra origins (comma-separated) |
+| `TEST_DURATION_MINUTES` | global test duration (default 30) |
+| `NEXT_PUBLIC_API_URL` | API origin, baked into the web build |
+
 ---
 
 ## Features
@@ -86,17 +108,18 @@ The admin app runs at `http://localhost:3000` and the API at `http://localhost:3
 ### Candidate experience
 
 - Opens a shared link — no login, no signup
-- Timed 30-minute MCQ test with live countdown (green → yellow → red)
+- Editorial "Exam Hall" design — serif question framing, an instrument-style countdown, and a refined results page (scoped to the candidate section; the admin app is unaffected)
+- Timed test with live countdown (green → amber → red); duration is server-configurable (default 30 min) and reported to the UI so the two never drift
 - Page-refresh recovery — resumes mid-test with correct remaining time
-- Auto-submit on timer expiry (server enforced)
-- Results page: overall score, pass/fail verdict, skill-area breakdown, full answer sheet
-- Mobile-ready, dark-mode-aware design (respects OS preference)
+- Auto-submit on timer expiry (server enforced); the final question turns the primary action into a bold Submit
+- Results page: overall score, pass/fail verdict, skill-area meters, full answer sheet
+- Mobile-ready, dark-mode-aware design (respects OS preference, `prefers-reduced-motion`)
 
 ### Admin app
 
 - **Dashboard** — KPI cards (total candidates, pass rate, average score, weakest skill area), score distribution chart, competency breakdown chart, recent submissions table; filterable by test config and date range
 - **Question bank** — Full CRUD with immutable versioning, skill-area tagging, bulk import/export CSV, bulk archive/delete with reference protection, server-side paginated
-- **Test configurations** — Create tests specifying technology, seniority, question count, and pass threshold; generate shareable links with optional candidate name capture
+- **Test configurations** — Cards grouped by technology and sorted by seniority; create tests specifying technology, seniority, question count, and pass threshold. A **Generate-link dialog** captures the (required) candidate name, generates the link, and offers share targets (copy / email / Teams / native share). Destructive actions live under a kebab (⋮) menu
 - **Submissions** — Paginated list, drill-down to full answer sheet, side-by-side candidate comparison, CSV export, owner-only deletion with audit logging; PDF print export
 - **Accounts** — Owner-managed team accounts (Owner / Reviewer / Member roles)
 - **Settings** — Display name and password change
@@ -112,6 +135,44 @@ The admin app runs at `http://localhost:3000` and the API at `http://localhost:3
 ---
 
 ## Changelog
+
+### v1.3 — Deployment, Candidate Redesign & Backend Foundation ✓ (2026-06-09)
+
+Cloud deployment, a redesigned candidate and test-config experience, and the first pass of a backend restructure.
+
+#### Deployment
+
+- `render.yaml` Blueprint — managed PostgreSQL + Dockerized API and web services, predictable cross-service URLs, auto-generated `JWT_SECRET`
+- Multi-stage Dockerfiles; the API entrypoint runs migrations + admin seed before start
+- `GET /health` liveness endpoint and SIGTERM/SIGINT graceful shutdown
+
+#### Candidate experience redesign — "Editorial Exam Hall"
+
+- New editorial design system **scoped to the candidate section** (warm paper → deep ink), leaving the admin app untouched
+- Three-voice typography: Fraunces (serif framing), Hanken Grotesk (UI), JetBrains Mono (timer/counters)
+- Instrument-style timer, accessible option states, refined question map, staggered entrance (respects `prefers-reduced-motion`)
+- Prominent Next button; the last question promotes the primary action to a bold Submit
+- Editorial results page — verdict, stat tiles, skill meters, refined answer sheet
+
+#### Admin — test configuration redesign
+
+- Flat list replaced with cards **grouped by technology and sorted by seniority**
+- Destructive Delete moved into a kebab (⋮) menu, away from the primary action
+- New **Generate-link dialog**: required candidate name → link → share via copy / email / Teams / native share, with a randomly generated gradient-art panel
+
+#### Backend foundation refactor
+
+- `config/env.ts` — Zod-validated, fail-fast configuration (single source of truth); hardcoded origins removed
+- `app.ts` / `index.ts` split (`buildApp()` vs listen); central error handler normalizing to `{ error: string }`
+- Ordered SQL migrations + a hand-rolled runner with a `schema_migrations` table that **baselines** the existing database (no destructive re-init)
+- Test duration moved to config; `/candidate/session` reports `duration_ms` so the UI never drifts
+
+#### Fixes
+
+- Submissions list returned 500 on every call (untyped `NULL` filter params) — switched to conditional query fragments
+- Admin "View result" / "Back to links" 404s — corrected route-group navigation paths (`(admin)` adds no URL segment)
+
+---
 
 ### v1.2 — Front End Improvements ✓ (2026-05-08)
 
@@ -261,3 +322,5 @@ Cross-candidate analytics and data lifecycle management.
 | Owner / Reviewer / Member RBAC | Team hiring workflow: interviewers view results; only owners edit questions and manage accounts |
 | `window.print()` for PDF | No dependency on `react-pdf` or `html2canvas` — browser print is reliable, zero bundle cost |
 | Conditional SQL JOIN for filters | `JOIN test_links` only emitted when a filter is active; no performance hit on unfiltered queries |
+| Validated env (`config/env.ts`) | One fail-fast source of truth — a missing/invalid variable stops the boot with a clear message instead of an obscure runtime crash |
+| Ordered SQL migrations + baseline | Versioned files tracked in `schema_migrations`; the runner adopts a pre-existing database without re-running, replacing the old comment-slicing script |
