@@ -5,6 +5,8 @@ export interface Technology {
   slug: string;
   name: string;
   created_at: string;
+  is_active?: boolean;
+  question_count?: number | string; // COUNT() comes back as string from pg
 }
 
 export interface Question {
