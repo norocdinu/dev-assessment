@@ -5,6 +5,7 @@ import { db } from '../db/client.js';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { requireRole } from '../middleware/rbac.js';
 import { logAudit } from '../lib/audit.js';
+import { pageSizeSchema, parseExportIds } from '../lib/question-query.js';
 
 const questionBodySchema = z.object({
   technology_id: z.string().uuid(),
@@ -28,7 +29,7 @@ const listQuerySchema = z.object({
   search: z.string().optional(),
   include_archived: z.string().optional(),
   page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(25),
+  pageSize: pageSizeSchema,
 });
 
 export async function questionRoutes(app: FastifyInstance) {
@@ -39,7 +40,9 @@ export async function questionRoutes(app: FastifyInstance) {
 
     const { technology, difficulty, skill_area, search, include_archived, page, pageSize } = query.data;
     const showArchived = include_archived === 'true';
-    const offset = (page - 1) * pageSize;
+    const isAll = pageSize === 'all';
+    const effectivePage = isAll ? 1 : page;
+    const offset = isAll ? 0 : (effectivePage - 1) * (pageSize as number);
 
     const [countRow] = await db`
       SELECT COUNT(*) AS count
@@ -64,10 +67,10 @@ export async function questionRoutes(app: FastifyInstance) {
         ${skill_area ? db`AND q.skill_area ILIKE ${'%' + skill_area + '%'}` : db``}
         ${search ? db`AND q.text ILIKE ${'%' + search + '%'}` : db``}
       ORDER BY q.created_at DESC
-      LIMIT ${pageSize} OFFSET ${offset}
+      ${isAll ? db`` : db`LIMIT ${pageSize as number} OFFSET ${offset}`}
     `;
 
-    return reply.status(200).send({ data: rows, total: Number(countRow.count), page, pageSize });
+    return reply.status(200).send({ data: rows, total: Number(countRow.count), page: effectivePage, pageSize });
   });
 
   // GET /questions/export — CSV export (owner only, no pagination, same filters as list)
@@ -75,20 +78,33 @@ export async function questionRoutes(app: FastifyInstance) {
     const query = listQuerySchema.safeParse(request.query);
     if (!query.success) return reply.status(400).send({ error: 'Invalid query params' });
 
-    const { technology, difficulty, skill_area, search, include_archived } = query.data;
+    const { technology, difficulty, skill_area, search, include_archived, page, pageSize } = query.data;
     const showArchived = include_archived === 'true';
+
+    let exportIds: string[] | null;
+    try {
+      exportIds = parseExportIds((request.query as { ids?: string }).ids);
+    } catch {
+      return reply.status(400).send({ error: 'Invalid ids param' });
+    }
+    const pageMode = !exportIds && pageSize !== 'all' && (request.query as { page?: string }).page !== undefined;
+    const pSize = pageSize === 'all' ? 0 : (pageSize as number);
+    const pOffset = (page - 1) * pSize;
 
     const rows = await db`
       SELECT q.*, t.slug AS tech_slug, t.name AS technology_name
       FROM questions q
       JOIN technologies t ON t.id = q.technology_id
       WHERE q.is_latest = TRUE
-        ${showArchived ? db`` : db`AND q.is_active = TRUE`}
-        ${technology ? db`AND t.slug = ${technology}` : db``}
-        ${difficulty ? db`AND q.difficulty = ${difficulty}` : db``}
-        ${skill_area ? db`AND q.skill_area ILIKE ${'%' + skill_area + '%'}` : db``}
-        ${search ? db`AND q.text ILIKE ${'%' + search + '%'}` : db``}
+        ${exportIds ? db`AND q.family_id = ANY(${exportIds}::uuid[])` : db`
+          ${showArchived ? db`` : db`AND q.is_active = TRUE`}
+          ${technology ? db`AND t.slug = ${technology}` : db``}
+          ${difficulty ? db`AND q.difficulty = ${difficulty}` : db``}
+          ${skill_area ? db`AND q.skill_area ILIKE ${'%' + skill_area + '%'}` : db``}
+          ${search ? db`AND q.text ILIKE ${'%' + search + '%'}` : db``}
+        `}
       ORDER BY q.created_at DESC
+      ${pageMode ? db`LIMIT ${pSize} OFFSET ${pOffset}` : db``}
     `;
 
     const esc = (v: string | number | boolean | null | undefined) =>
