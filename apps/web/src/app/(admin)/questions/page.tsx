@@ -11,6 +11,8 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { FileQuestion } from 'lucide-react';
+import { ManageTechnologiesDialog } from '@/components/admin/ManageTechnologiesDialog';
+import { ExportScopeDialog, type ExportScope } from '@/components/admin/ExportScopeDialog';
 
 interface QuestionRow extends Question {
   technology_name: string;
@@ -41,7 +43,9 @@ export default function QuestionsPage() {
   const [importing, setImporting] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const PAGE_SIZE = 25;
+  const [pageSize, setPageSize] = useState<number | 'all'>(25);
+  const [manageTechOpen, setManageTechOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteBlocked, setBulkDeleteBlocked] = useState<Array<{ id: string; count: number }>>([]);
   const [deleteErrors, setDeleteErrors] = useState<Record<string, string>>({});
@@ -66,18 +70,18 @@ export default function QuestionsPage() {
       if (debouncedSearch) params.set('search', debouncedSearch);
       if (showArchived) params.set('include_archived', 'true');
       params.set('page', String(page));
-      params.set('pageSize', String(PAGE_SIZE));
+      params.set('pageSize', String(pageSize));
       const res = await api.get(`/questions?${params}`);
       setQuestions(res.data.data);
       setTotal(res.data.total);
     } finally {
       setLoading(false);
     }
-  }, [technology, difficulty, debouncedSkillArea, debouncedSearch, showArchived, page]);
+  }, [technology, difficulty, debouncedSkillArea, debouncedSearch, showArchived, page, pageSize]);
 
   useEffect(() => {
     setPage(1);
-  }, [technology, difficulty, debouncedSkillArea, debouncedSearch, showArchived]);
+  }, [technology, difficulty, debouncedSkillArea, debouncedSearch, showArchived, pageSize]);
 
   useEffect(() => { fetchQuestions(); }, [fetchQuestions]);
 
@@ -122,14 +126,23 @@ export default function QuestionsPage() {
     }
   }
 
-  async function handleExport() {
+  async function runExport(scope: ExportScope) {
+    setExportOpen(false);
     try {
       const params = new URLSearchParams();
-      if (technology) params.set('technology', technology);
-      if (difficulty) params.set('difficulty', difficulty);
-      if (debouncedSkillArea) params.set('skill_area', debouncedSkillArea);
-      if (debouncedSearch) params.set('search', debouncedSearch);
-      if (showArchived) params.set('include_archived', 'true');
+      if (scope === 'selected') {
+        params.set('ids', Array.from(selectedIds).join(','));
+      } else {
+        if (technology) params.set('technology', technology);
+        if (difficulty) params.set('difficulty', difficulty);
+        if (debouncedSkillArea) params.set('skill_area', debouncedSkillArea);
+        if (debouncedSearch) params.set('search', debouncedSearch);
+        if (showArchived) params.set('include_archived', 'true');
+        if (scope === 'page' && pageSize !== 'all') {
+          params.set('page', String(page));
+          params.set('pageSize', String(pageSize));
+        }
+      }
       const res = await api.get(`/questions/export?${params}`, { responseType: 'blob' });
       const url = URL.createObjectURL(res.data);
       const a = document.createElement('a');
@@ -139,7 +152,7 @@ export default function QuestionsPage() {
       URL.revokeObjectURL(url);
       toast.success('Export started');
     } catch {
-      // error handled silently — file download failure is obvious to the user
+      toast.error('Export failed');
     }
   }
 
@@ -312,7 +325,13 @@ export default function QuestionsPage() {
         {isOwner && (
           <div className="flex gap-2">
             <button
-              onClick={handleExport}
+              onClick={() => setManageTechOpen(true)}
+              className="px-4 py-2 text-sm rounded-md border text-foreground/80 border-border hover:bg-muted/10"
+            >
+              Manage technologies
+            </button>
+            <button
+              onClick={() => setExportOpen(true)}
               className="px-4 py-2 text-sm rounded-md border text-foreground/80 border-border hover:bg-muted/10"
             >
               Export CSV
@@ -371,6 +390,20 @@ export default function QuestionsPage() {
           <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
           Show archived
         </label>
+        <label className="flex items-center gap-2 text-sm text-foreground/70 ml-auto">
+          Show
+          <select
+            value={String(pageSize)}
+            onChange={(e) => setPageSize(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+            className="px-2 py-2 border border-border rounded-md text-sm"
+          >
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="all">All</option>
+          </select>
+        </label>
       </div>
 
       {/* Import result */}
@@ -413,7 +446,7 @@ export default function QuestionsPage() {
       <DataTable
         columns={columns}
         data={questions}
-        pagination={{ page, pageSize: PAGE_SIZE, total, onPageChange: setPage }}
+        pagination={pageSize === 'all' ? undefined : { page, pageSize, total, onPageChange: setPage }}
         loading={loading}
       />
 
@@ -499,6 +532,19 @@ export default function QuestionsPage() {
           </div>
         </div>
       )}
+
+      <ManageTechnologiesDialog
+        open={manageTechOpen}
+        onClose={() => setManageTechOpen(false)}
+        onChanged={() => { api.get('/technologies').then((r) => setTechnologies(r.data)).catch(() => {}); fetchQuestions(); }}
+      />
+      <ExportScopeDialog
+        open={exportOpen}
+        selectedCount={selectedIds.size}
+        pageCount={questions.length}
+        onConfirm={runExport}
+        onClose={() => setExportOpen(false)}
+      />
     </div>
   );
 }
