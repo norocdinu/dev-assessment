@@ -136,6 +136,25 @@ Deployed via the root **`render.yaml`** Blueprint — managed PostgreSQL plus Do
 
 ## Changelog
 
+### v1.4 — Technology Management & Question-Bank Controls ✓ (2026-06-16)
+
+Owners can now curate the technology list directly, and the question bank gained per-page and export controls.
+
+#### Technology management
+
+- **Add / delete / archive / restore technologies** from a "Manage technologies" dialog on the Question Bank (owner-only) — previously the list was fixed to the three seeded rows
+- Deleting a populated technology presents a choice: **Archive** (hide it and its questions, reversible) or **Delete permanently** (questions tied to past submissions are archived instead of deleted, and reported back)
+- **Live-link guard**: deletion is blocked when any of the technology's test-configs has an outstanding candidate link (`created`/`active`); link-free configs are archived
+- New `is_active` column on `technologies` (migration `0004`); all technology pickers and the question list filter to active technologies
+- Technology mutations are now audit-logged (`technology.create` / `.archive` / `.delete` / `.restore`)
+
+#### Question bank
+
+- **Page-size control** — choose 10 / 25 / 50 / 100 / All rows per page (default 25)
+- **Scoped CSV export** — a modal to export the **selected** rows, the **current page**, or **all** rows matching the active filters
+
+---
+
 ### v1.3 — Deployment, Candidate Redesign & Backend Foundation ✓ (2026-06-09)
 
 Cloud deployment, a redesigned candidate and test-config experience, and the first pass of a backend restructure.
