@@ -9,6 +9,54 @@ export interface Technology {
   question_count?: number | string; // COUNT() comes back as string from pg
 }
 
+export type QuestionType =
+  | 'single_choice'
+  | 'multi_select'
+  | 'true_false'
+  | 'matching'
+  | 'ordering'
+  | 'fill_blank';
+
+/** A stimulus block — the shared prompt body for every question type. */
+export type Block =
+  | { type: 'text'; text: string }
+  | { type: 'code'; lang: string; code: string }
+  | { type: 'image'; assetId: string; alt: string };
+
+/** Authoring-side content (the correct answer lives in answer_key, never here). */
+export interface SingleChoiceContent { prompt: Block[]; options: string[] }
+export interface MultiSelectContent  { prompt: Block[]; options: string[] }
+export interface TrueFalseContent    { prompt: Block[] }
+export interface MatchingContent     { prompt: Block[]; left: string[]; right: string[] }
+export interface OrderingContent     { prompt: Block[]; items: string[] } // stored in CORRECT order
+export interface FillBlankContent    { prompt: Block[] }                  // blanks = `___` markers in text blocks
+
+export type QuestionContent =
+  | SingleChoiceContent | MultiSelectContent | TrueFalseContent
+  | MatchingContent | OrderingContent | FillBlankContent;
+
+export interface SingleChoiceKey { correctIndex: number }
+export interface MultiSelectKey  { correctIndices: number[] }
+export interface TrueFalseKey    { correct: boolean }
+export interface MatchingKey     { map: Record<string, number> }  // leftIdx -> rightIdx
+export interface OrderingKey     { order: number[] }              // canonical correct order = [0,1,2,...]
+export interface FillBlankKey    { blanks: { accepted: string[] }[] }
+
+export type AnswerKey =
+  | SingleChoiceKey | MultiSelectKey | TrueFalseKey
+  | MatchingKey | OrderingKey | FillBlankKey;
+
+export interface SingleChoiceResp { index: number }
+export interface MultiSelectResp  { indices: number[] }
+export interface TrueFalseResp    { value: boolean }
+export interface MatchingResp     { map: Record<string, number> } // leftIdx -> rightIdx
+export interface OrderingResp     { order: number[] }             // item original-indices in chosen order
+export interface FillBlankResp    { values: string[] }
+
+export type AnswerResponse =
+  | SingleChoiceResp | MultiSelectResp | TrueFalseResp
+  | MatchingResp | OrderingResp | FillBlankResp;
+
 export interface Question {
   id: string;
   family_id: string;
@@ -17,17 +65,45 @@ export interface Question {
   technology_name?: string;
   difficulty: Difficulty;
   skill_area: string;
-  text: string;
-  option_a: string;
-  option_b: string;
-  option_c: string;
-  option_d: string;
-  correct_option: 'a' | 'b' | 'c' | 'd';
+  type: QuestionType;
+  content: QuestionContent;
+  answer_key: AnswerKey;
   explanation?: string;
   is_active: boolean;
   is_latest: boolean;
   created_by: string;
   created_at: string;
+}
+
+/** An option that has been shuffled for display but remembers its original index. */
+export interface ShuffledItem { idx: number; text: string }
+
+/** Candidate-safe content: answer_key removed; matching.right & ordering.items shuffled. */
+export type CandidateContent =
+  | { prompt: Block[]; options: string[] }                 // single_choice / multi_select
+  | { prompt: Block[] }                                    // true_false / fill_blank
+  | { prompt: Block[]; left: string[]; right: ShuffledItem[] } // matching
+  | { prompt: Block[]; items: ShuffledItem[] };            // ordering
+
+export interface CandidateQuestion {
+  id: string;
+  type: QuestionType;
+  skill_area: string;
+  content: CandidateContent;
+}
+
+export interface CandidateSession {
+  started_at: string;
+  server_now: string;
+  duration_ms: number;
+  questions: CandidateQuestion[];
+}
+
+export interface LocalSession {
+  token: string;
+  startedAt: string;
+  answers: Record<string, AnswerResponse>;
+  currentQuestionIndex: number;
 }
 
 export interface TestConfig {
@@ -72,30 +148,6 @@ export interface TestLink {
   created_at: string;
 }
 
-export interface CandidateQuestion {
-  id: string;
-  text: string;
-  option_a: string;
-  option_b: string;
-  option_c: string;
-  option_d: string;
-  skill_area: string;
-}
-
-export interface CandidateSession {
-  started_at: string;
-  server_now: string;
-  duration_ms: number;
-  questions: CandidateQuestion[];
-}
-
-export interface LocalSession {
-  token: string;
-  startedAt: string;
-  answers: Record<string, 'a' | 'b' | 'c' | 'd'>;
-  currentQuestionIndex: number;
-}
-
 // Phase 3: Grading & Results
 
 export interface SkillAreaScore {
@@ -105,13 +157,10 @@ export interface SkillAreaScore {
 }
 
 export interface AnswerSheetRow {
-  question_text: string;
-  option_a: string;
-  option_b: string;
-  option_c: string;
-  option_d: string;
-  correct_option: 'a' | 'b' | 'c' | 'd';
-  candidate_answer: 'a' | 'b' | 'c' | 'd' | null;
+  type: QuestionType;
+  content: QuestionContent;
+  answer_key: AnswerKey;
+  response: AnswerResponse | null;
   is_correct: boolean;
   skill_area: string;
 }

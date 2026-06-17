@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { db } from '../db/client.js';
 import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { requireRole } from '../middleware/rbac.js';
+import { gradeAnswer } from '../lib/grade-answer.js';
+import type { QuestionType } from '@dev-assessment/shared';
 
 const listQuerySchema = z.object({
   testConfigId: z.string().uuid().optional(),
@@ -232,23 +234,16 @@ export async function submissionRoutes(app: FastifyInstance) {
     if (!result) return reply.status(404).send({ error: 'Submission not found' });
 
     const answerSheet = await db`
-      SELECT
-        q.family_id,
-        q.version,
-        q.text             AS question_text,
-        q.option_a,
-        q.option_b,
-        q.option_c,
-        q.option_d,
-        q.correct_option,
-        q.skill_area,
-        ca.answer          AS candidate_answer,
-        (ca.answer = q.correct_option) AS is_correct
+      SELECT q.family_id, q.version, q.type, q.content, q.answer_key,
+             ca.answer AS response, q.skill_area
       FROM candidate_answers ca
       JOIN questions q ON q.id = ca.question_id
       WHERE ca.link_id = ${linkId}
       ORDER BY q.skill_area, q.id
     `;
+
+    const sheet = (answerSheet as unknown as Array<{ family_id: string; version: number; type: QuestionType; content: any; answer_key: any; response: any; skill_area: string }>)
+      .map((r) => ({ ...r, is_correct: gradeAnswer(r.type, r.answer_key, r.response) }));
 
     return reply.status(200).send({
       link_id: result.link_id,
@@ -263,7 +258,7 @@ export async function submissionRoutes(app: FastifyInstance) {
       technology_name: result.technology_name,
       difficulty: result.difficulty,
       skill_area_scores: result.skill_area_scores,
-      answer_sheet: answerSheet,
+      answer_sheet: sheet,
     });
   });
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Brandmark } from '@/components/candidate/Brandmark';
 import type { SubmissionResult } from '@dev-assessment/shared';
+import { AnswerSheetItem } from '@/components/question/AnswerSheetItem';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -13,13 +14,6 @@ function formatTime(seconds: number): string {
   return `${m}m ${s.toString().padStart(2, '0')}s`;
 }
 
-function getOptionText(
-  row: { option_a: string; option_b: string; option_c: string; option_d: string },
-  key: 'a' | 'b' | 'c' | 'd'
-): string {
-  const map = { a: row.option_a, b: row.option_b, c: row.option_c, d: row.option_d };
-  return map[key];
-}
 
 export default function ResultsPage() {
   const { token } = useParams<{ token: string }>();
@@ -192,53 +186,8 @@ export default function ResultsPage() {
           <h2 className="border-b border-border px-6 py-4 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted sm:px-8">
             Answer sheet
           </h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left font-mono text-[10px] uppercase tracking-[0.1em] text-muted">
-                  <th className="py-3 pl-6 pr-3 font-medium sm:pl-8">#</th>
-                  <th className="py-3 pr-4 font-medium">Question</th>
-                  <th className="py-3 pr-4 font-medium">Your answer</th>
-                  <th className="py-3 pr-4 font-medium">Correct</th>
-                  <th className="py-3 pr-6 text-right font-medium sm:pr-8">Result</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {result.answer_sheet.map((row, i) => (
-                  <tr key={i} className="align-top">
-                    <td className="py-4 pl-6 pr-3 font-mono text-xs text-muted sm:pl-8">
-                      {String(i + 1).padStart(2, '0')}
-                    </td>
-                    <td className="max-w-xs py-4 pr-4 text-foreground">{row.question_text}</td>
-                    <td className="py-4 pr-4">
-                      {row.candidate_answer ? (
-                        <span className={row.is_correct ? 'text-foreground' : 'text-danger'}>
-                          <span className="font-mono font-medium">{row.candidate_answer.toUpperCase()}.</span>{' '}
-                          {getOptionText(row, row.candidate_answer)}
-                        </span>
-                      ) : (
-                        <span className="italic text-muted">No answer</span>
-                      )}
-                    </td>
-                    <td className="py-4 pr-4 text-foreground">
-                      <span className="font-mono font-medium">{row.correct_option.toUpperCase()}.</span>{' '}
-                      {getOptionText(row, row.correct_option)}
-                    </td>
-                    <td className="py-4 pr-6 text-right sm:pr-8">
-                      {row.is_correct ? (
-                        <span className="inline-flex items-center gap-1.5 font-mono text-xs font-medium text-success">
-                          <span className="h-1.5 w-1.5 rounded-full bg-success" /> Correct
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 font-mono text-xs font-medium text-danger">
-                          <span className="h-1.5 w-1.5 rounded-full bg-danger" /> Wrong
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="px-6 py-4 space-y-3 sm:px-8">
+            {result.answer_sheet.map((row, i) => <AnswerSheetItem key={i} row={row} />)}
           </div>
         </section>
 

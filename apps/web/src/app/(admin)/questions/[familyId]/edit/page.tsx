@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { QuestionForm } from '@/components/ui/QuestionForm';
+import type { QuestionFormValues } from '@/components/ui/QuestionForm';
 import { api } from '@/lib/api';
 import type { Question, Technology } from '@dev-assessment/shared';
 
@@ -25,7 +26,7 @@ export default function EditQuestionPage() {
     }).catch(() => setError('Failed to load question'));
   }, [familyId]);
 
-  async function handleSubmit(data: Parameters<typeof QuestionForm>[0]['onSubmit'] extends (d: infer D) => unknown ? D : never) {
+  async function handleSubmit(data: QuestionFormValues) {
     setLoading(true);
     setError('');
     try {
@@ -51,12 +52,9 @@ export default function EditQuestionPage() {
           technology_id: question!.technology_id,
           difficulty: question!.difficulty,
           skill_area: question!.skill_area,
-          text: question!.text,
-          option_a: question!.option_a,
-          option_b: question!.option_b,
-          option_c: question!.option_c,
-          option_d: question!.option_d,
-          correct_option: question!.correct_option,
+          type: question!.type,
+          content: question!.content,
+          answer_key: question!.answer_key,
           explanation: question!.explanation ?? '',
         }}
         currentVersion={question!.version}

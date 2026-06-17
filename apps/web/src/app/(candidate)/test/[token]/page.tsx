@@ -8,7 +8,7 @@ import { QuestionNav } from '@/components/candidate/QuestionNav';
 import { SubmitModal } from '@/components/candidate/SubmitModal';
 import { ProgressBar } from '@/components/candidate/ProgressBar';
 import { Brandmark } from '@/components/candidate/Brandmark';
-import type { CandidateQuestion, LocalSession } from '@dev-assessment/shared';
+import type { CandidateQuestion, AnswerResponse, LocalSession } from '@dev-assessment/shared';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 // Fallback only — the authoritative duration comes from the session payload.
@@ -38,7 +38,7 @@ export default function TestPage() {
 
   const [loading, setLoading] = useState(true);
   const [questions, setQuestions] = useState<CandidateQuestion[]>([]);
-  const [answers, setAnswers] = useState<Record<string, 'a' | 'b' | 'c' | 'd'>>({});
+  const [answers, setAnswers] = useState<Record<string, AnswerResponse>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [remainingMs, setRemainingMs] = useState(DEFAULT_DURATION_MS);
   const [durationMs, setDurationMs] = useState(DEFAULT_DURATION_MS);
@@ -135,7 +135,7 @@ export default function TestPage() {
         setQuestions(qs);
 
         const local = getLocalSession(token);
-        let restoredAnswers: Record<string, 'a' | 'b' | 'c' | 'd'> = {};
+        let restoredAnswers: Record<string, AnswerResponse> = {};
         let restoredIndex = 0;
 
         if (local && local.startedAt === started_at) {
@@ -165,7 +165,7 @@ export default function TestPage() {
     loadSession();
   }, [token, router]);
 
-  function handleAnswer(questionId: string, answer: 'a' | 'b' | 'c' | 'd') {
+  function handleAnswer(questionId: string, answer: AnswerResponse) {
     const updated = { ...answers, [questionId]: answer };
     setAnswers(updated);
     saveLocalSession({
@@ -232,8 +232,8 @@ export default function TestPage() {
           question={currentQuestion}
           questionNumber={currentIndex + 1}
           totalQuestions={questions.length}
-          selectedAnswer={answers[currentQuestion.id]}
-          onAnswer={(ans) => handleAnswer(currentQuestion.id, ans)}
+          value={answers[currentQuestion.id]}
+          onChange={(r) => handleAnswer(currentQuestion.id, r)}
         />
 
         {/* Previous / Next — prominent controls; Next becomes Submit on the last question */}

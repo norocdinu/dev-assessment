@@ -1,9 +1,11 @@
 'use client';
 
+import type { AnswerResponse } from '@dev-assessment/shared';
+
 interface QuestionNavProps {
   totalQuestions: number;
   currentIndex: number;
-  answers: Record<string, 'a' | 'b' | 'c' | 'd'>;
+  answers: Record<string, AnswerResponse>;
   questionIds: string[];
   onNavigate: (index: number) => void;
 }

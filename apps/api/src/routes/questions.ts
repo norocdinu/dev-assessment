@@ -6,21 +6,18 @@ import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { requireRole } from '../middleware/rbac.js';
 import { logAudit } from '../lib/audit.js';
 import { pageSizeSchema, parseExportIds } from '../lib/question-query.js';
+import { validateQuestionContent } from '../lib/question-schema.js';
+import type { QuestionType } from '@dev-assessment/shared';
 
 const questionBodySchema = z.object({
   technology_id: z.string().uuid(),
   difficulty: z.enum(['junior', 'mid', 'senior']),
   skill_area: z.string().min(1),
-  text: z.string().min(1),
-  option_a: z.string().min(1),
-  option_b: z.string().min(1),
-  option_c: z.string().min(1),
-  option_d: z.string().min(1),
-  correct_option: z.enum(['a', 'b', 'c', 'd']),
+  type: z.enum(['single_choice', 'multi_select', 'true_false', 'matching', 'ordering', 'fill_blank']),
+  content: z.record(z.string(), z.unknown()),
+  answer_key: z.record(z.string(), z.unknown()),
   explanation: z.string().optional(),
 });
-
-const questionUpdateSchema = questionBodySchema.partial();
 
 const listQuerySchema = z.object({
   technology: z.string().optional(),
@@ -53,7 +50,10 @@ export async function questionRoutes(app: FastifyInstance) {
         ${technology ? db`AND t.slug = ${technology}` : db``}
         ${difficulty ? db`AND q.difficulty = ${difficulty}` : db``}
         ${skill_area ? db`AND q.skill_area ILIKE ${'%' + skill_area + '%'}` : db``}
-        ${search ? db`AND q.text ILIKE ${'%' + search + '%'}` : db``}
+        ${search ? db`AND EXISTS (
+          SELECT 1 FROM jsonb_array_elements(q.content->'prompt') b
+          WHERE b->>'type' = 'text' AND b->>'text' ILIKE ${'%' + search + '%'}
+        )` : db``}
     `;
 
     const rows = await db`
@@ -65,7 +65,10 @@ export async function questionRoutes(app: FastifyInstance) {
         ${technology ? db`AND t.slug = ${technology}` : db``}
         ${difficulty ? db`AND q.difficulty = ${difficulty}` : db``}
         ${skill_area ? db`AND q.skill_area ILIKE ${'%' + skill_area + '%'}` : db``}
-        ${search ? db`AND q.text ILIKE ${'%' + search + '%'}` : db``}
+        ${search ? db`AND EXISTS (
+          SELECT 1 FROM jsonb_array_elements(q.content->'prompt') b
+          WHERE b->>'type' = 'text' AND b->>'text' ILIKE ${'%' + search + '%'}
+        )` : db``}
       ORDER BY q.created_at DESC
       ${isAll ? db`` : db`LIMIT ${pageSize as number} OFFSET ${offset}`}
     `;
@@ -101,7 +104,10 @@ export async function questionRoutes(app: FastifyInstance) {
           ${technology ? db`AND t.slug = ${technology}` : db``}
           ${difficulty ? db`AND q.difficulty = ${difficulty}` : db``}
           ${skill_area ? db`AND q.skill_area ILIKE ${'%' + skill_area + '%'}` : db``}
-          ${search ? db`AND q.text ILIKE ${'%' + search + '%'}` : db``}
+          ${search ? db`AND EXISTS (
+            SELECT 1 FROM jsonb_array_elements(q.content->'prompt') b
+            WHERE b->>'type' = 'text' AND b->>'text' ILIKE ${'%' + search + '%'}
+          )` : db``}
         `}
       ORDER BY q.created_at DESC
       ${pageMode ? db`LIMIT ${pSize} OFFSET ${pOffset}` : db``}
@@ -110,31 +116,25 @@ export async function questionRoutes(app: FastifyInstance) {
     const esc = (v: string | number | boolean | null | undefined) =>
       `"${String(v ?? '').replace(/"/g, '""')}"`;
 
-    const headers = ['Technology', 'Difficulty', 'Skill Area', 'Question Text', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Option', 'Explanation'];
+    const headers = ['Technology', 'Difficulty', 'Skill Area', 'Type', 'Question Text', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Option', 'Explanation'];
+    const firstText = (content: any) =>
+      (content?.prompt ?? []).find((b: any) => b.type === 'text')?.text ?? '';
     const dataRows = (rows as unknown as Array<{
-      tech_slug: string;
-      technology_name: string;
-      difficulty: string;
-      skill_area: string;
-      text: string;
-      option_a: string;
-      option_b: string;
-      option_c: string;
-      option_d: string;
-      correct_option: string;
-      explanation: string | null;
-    }>).map(q => [
-      esc(q.tech_slug),
-      esc(q.difficulty),
-      esc(q.skill_area),
-      esc(q.text),
-      esc(q.option_a),
-      esc(q.option_b),
-      esc(q.option_c),
-      esc(q.option_d),
-      esc(q.correct_option),
-      esc(q.explanation ?? ''),
-    ].join(','));
+      tech_slug: string; technology_name: string; difficulty: string; skill_area: string;
+      type: string; content: any; answer_key: any; explanation: string | null;
+    }>)
+      .filter(q => q.type === 'single_choice')
+      .map(q => {
+        const opts = q.content?.options ?? [];
+        const ci = q.answer_key?.correctIndex ?? 0;
+        return [
+          esc(q.tech_slug), esc(q.difficulty), esc(q.skill_area), esc('single_choice'),
+          esc(firstText(q.content)),
+          esc(opts[0] ?? ''), esc(opts[1] ?? ''), esc(opts[2] ?? ''), esc(opts[3] ?? ''),
+          esc(['a', 'b', 'c', 'd'][ci] ?? 'a'),
+          esc(q.explanation ?? ''),
+        ].join(',');
+      });
 
     const csv = [headers.map(h => esc(h)).join(','), ...dataRows].join('\r\n');
 
@@ -224,17 +224,18 @@ export async function questionRoutes(app: FastifyInstance) {
     const body = questionBodySchema.safeParse(request.body);
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() });
 
+    const check = validateQuestionContent(body.data.type as QuestionType, body.data.content, body.data.answer_key);
+    if (!check.ok) return reply.status(400).send({ error: check.error });
+
     const familyId = uuidv4();
     const [question] = await db`
       INSERT INTO questions (
         family_id, version, technology_id, difficulty, skill_area,
-        text, option_a, option_b, option_c, option_d, correct_option,
-        explanation, created_by
+        type, content, answer_key, explanation, created_by
       ) VALUES (
         ${familyId}, 1, ${body.data.technology_id}, ${body.data.difficulty},
-        ${body.data.skill_area}, ${body.data.text}, ${body.data.option_a},
-        ${body.data.option_b}, ${body.data.option_c}, ${body.data.option_d},
-        ${body.data.correct_option}, ${body.data.explanation ?? null}, ${getAuthUser(request).id}
+        ${body.data.skill_area}, ${body.data.type}, ${db.json(body.data.content as any)},
+        ${db.json(body.data.answer_key as any)}, ${body.data.explanation ?? null}, ${getAuthUser(request).id}
       )
       RETURNING *
     `;
@@ -252,35 +253,27 @@ export async function questionRoutes(app: FastifyInstance) {
   // PUT /questions/:familyId
   app.put('/:familyId', { preHandler: [authMiddleware, requireRole('owner')] }, async (request, reply) => {
     const { familyId } = request.params as { familyId: string };
-    const body = questionUpdateSchema.safeParse(request.body);
+    const body = questionBodySchema.safeParse(request.body);
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() });
 
+    const check = validateQuestionContent(body.data.type as QuestionType, body.data.content, body.data.answer_key);
+    if (!check.ok) return reply.status(400).send({ error: check.error });
+
     const [current] = await db`
-      SELECT * FROM questions WHERE family_id = ${familyId} AND is_latest = TRUE
+      SELECT version FROM questions WHERE family_id = ${familyId} AND is_latest = TRUE
     `;
     if (!current) return reply.status(404).send({ error: 'Question not found' });
 
-    const merged: Record<string, any> = {
-      ...current,
-      ...Object.fromEntries(Object.entries(body.data).filter(([, v]) => v !== undefined)),
-    };
-
     const [newVersion] = await db.begin(async (sql) => {
-      await sql`
-        UPDATE questions SET is_latest = FALSE
-        WHERE family_id = ${familyId} AND is_latest = TRUE
-      `;
+      await sql`UPDATE questions SET is_latest = FALSE WHERE family_id = ${familyId} AND is_latest = TRUE`;
       return sql`
         INSERT INTO questions (
           family_id, version, technology_id, difficulty, skill_area,
-          text, option_a, option_b, option_c, option_d, correct_option,
-          explanation, created_by
+          type, content, answer_key, explanation, created_by
         ) VALUES (
-          ${familyId}, ${current.version + 1}, ${merged.technology_id},
-          ${merged.difficulty}, ${merged.skill_area}, ${merged.text},
-          ${merged.option_a}, ${merged.option_b}, ${merged.option_c},
-          ${merged.option_d}, ${merged.correct_option}, ${merged.explanation ?? null},
-          ${getAuthUser(request).id}
+          ${familyId}, ${current.version + 1}, ${body.data.technology_id}, ${body.data.difficulty},
+          ${body.data.skill_area}, ${body.data.type}, ${sql.json(body.data.content as any)},
+          ${sql.json(body.data.answer_key as any)}, ${body.data.explanation ?? null}, ${getAuthUser(request).id}
         )
         RETURNING *
       `;
@@ -418,17 +411,20 @@ export async function questionRoutes(app: FastifyInstance) {
       }
 
       try {
+        const content = {
+          prompt: [{ type: 'text', text: validated.data.text }],
+          options: [validated.data.option_a, validated.data.option_b, validated.data.option_c, validated.data.option_d],
+        };
+        const answer_key = { correctIndex: { a: 0, b: 1, c: 2, d: 3 }[validated.data.correct_option] };
         const familyId = uuidv4();
         await db`
           INSERT INTO questions (
             family_id, version, technology_id, difficulty, skill_area,
-            text, option_a, option_b, option_c, option_d, correct_option,
-            explanation, created_by
+            type, content, answer_key, explanation, created_by
           ) VALUES (
             ${familyId}, 1, ${validated.data.technology_id}, ${validated.data.difficulty},
-            ${validated.data.skill_area}, ${validated.data.text}, ${validated.data.option_a},
-            ${validated.data.option_b}, ${validated.data.option_c}, ${validated.data.option_d},
-            ${validated.data.correct_option}, ${validated.data.explanation ?? null}, ${getAuthUser(request).id}
+            ${validated.data.skill_area}, 'single_choice', ${db.json(content)}, ${db.json(answer_key)},
+            ${validated.data.explanation ?? null}, ${getAuthUser(request).id}
           )
         `;
         imported++;

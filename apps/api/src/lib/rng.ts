@@ -28,3 +28,18 @@ export function seededSample<T>(pool: T[], count: number, seed: string): T[] {
   }
   return items.slice(0, count);
 }
+
+/**
+ * Full Fisher-Yates shuffle using a seeded RNG. Same seed + same array always
+ * yields the same permutation. Used to present matching/ordering options to the
+ * candidate without leaking the stored correct order.
+ */
+export function seededShuffle<T>(arr: T[], seed: string): T[] {
+  const rng = seedrandom(seed);
+  const items = [...arr];
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+  return items;
+}

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { QuestionForm } from '@/components/ui/QuestionForm';
+import type { QuestionFormValues } from '@/components/ui/QuestionForm';
 import { api } from '@/lib/api';
 import type { Technology } from '@dev-assessment/shared';
 
@@ -16,7 +17,7 @@ export default function NewQuestionPage() {
     api.get('/technologies').then((r) => setTechnologies(r.data)).catch(() => {});
   }, []);
 
-  async function handleSubmit(data: Parameters<typeof QuestionForm>[0]['onSubmit'] extends (d: infer D) => unknown ? D : never) {
+  async function handleSubmit(data: QuestionFormValues) {
     setLoading(true);
     setError('');
     try {

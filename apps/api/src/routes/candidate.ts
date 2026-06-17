@@ -2,12 +2,34 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { db } from '../db/client.js';
 import { env } from '../config/env.js';
-import { seededSample } from '../lib/rng.js';
+import { seededSample, seededShuffle } from '../lib/rng.js';
+import { gradeAnswer } from '../lib/grade-answer.js';
+import { responseSchemaFor } from '../lib/question-schema.js';
+import type { QuestionType } from '@dev-assessment/shared';
 
 const DURATION_MS = env.TEST_DURATION_MINUTES * 60 * 1000;
 
+/**
+ * Produce candidate-safe content: drop the answer_key, and for matching/ordering
+ * shuffle the order-bearing arrays deterministically (per link seed + question id)
+ * so the stored correct order is never revealed. Indices in ShuffledItem.idx are
+ * the ORIGINAL indices the candidate submits back.
+ */
+function toCandidateContent(type: QuestionType, content: any, seed: string, qid: string) {
+  if (type === 'matching') {
+    const right = content.right.map((text: string, idx: number) => ({ idx, text }));
+    return { prompt: content.prompt, left: content.left, right: seededShuffle(right, `${seed}:${qid}`) };
+  }
+  if (type === 'ordering') {
+    const items = content.items.map((text: string, idx: number) => ({ idx, text }));
+    return { prompt: content.prompt, items: seededShuffle(items, `${seed}:${qid}`) };
+  }
+  // single_choice / multi_select keep options as-is; true_false / fill_blank just prompt
+  return content;
+}
+
 const submitSchema = z.object({
-  answers: z.record(z.string().uuid(), z.enum(['a', 'b', 'c', 'd'])),
+  answers: z.record(z.string().uuid(), z.unknown()),
 });
 
 export async function candidateRoutes(app: FastifyInstance) {
@@ -44,7 +66,7 @@ export async function candidateRoutes(app: FastifyInstance) {
 
     // Fetch question pool — ORDER BY id is required for deterministic seededSample
     const pool = await db`
-      SELECT id, text, option_a, option_b, option_c, option_d, skill_area
+      SELECT id, type, content, skill_area
       FROM questions
       WHERE technology_id = ${link.technology_id}
         AND difficulty = ${link.difficulty}
@@ -58,6 +80,13 @@ export async function candidateRoutes(app: FastifyInstance) {
     }
 
     const questions = seededSample(pool, link.num_questions, link.seed);
+    const safeQuestions = (questions as unknown as Array<{ id: string; type: QuestionType; content: any; skill_area: string }>)
+      .map((q) => ({
+        id: q.id,
+        type: q.type,
+        skill_area: q.skill_area,
+        content: toCandidateContent(q.type, q.content, link.seed, q.id),
+      }));
     const serverNow = new Date().toISOString();
 
     if (link.state === 'created') {
@@ -66,7 +95,7 @@ export async function candidateRoutes(app: FastifyInstance) {
         SET state = 'active', started_at = ${serverNow}
         WHERE id = ${link.id} AND state = 'created'
       `;
-      return reply.status(200).send({ started_at: serverNow, server_now: serverNow, duration_ms: DURATION_MS, questions });
+      return reply.status(200).send({ started_at: serverNow, server_now: serverNow, duration_ms: DURATION_MS, questions: safeQuestions });
     }
 
     // state === 'active' — return existing started_at
@@ -74,7 +103,7 @@ export async function candidateRoutes(app: FastifyInstance) {
       started_at: link.started_at,
       server_now: serverNow,
       duration_ms: DURATION_MS,
-      questions,
+      questions: safeQuestions,
     });
   });
 
@@ -129,9 +158,22 @@ export async function candidateRoutes(app: FastifyInstance) {
       seededSample(pool as unknown as { id: string }[], link.num_questions, link.seed).map((q) => q.id)
     );
 
-    for (const qid of Object.keys(body.data.answers)) {
-      if (!validIds.has(qid)) {
-        return reply.status(400).send({ error: `Invalid question ID: ${qid}` });
+    const typeRows = await db`
+      SELECT id, type, answer_key
+      FROM questions
+      WHERE id = ANY(${Object.keys(body.data.answers)}::uuid[])
+    `;
+    const qmeta = new Map<string, { type: QuestionType; answer_key: any }>(
+      (typeRows as unknown as Array<{ id: string; type: QuestionType; answer_key: any }>)
+        .map((r) => [r.id, { type: r.type, answer_key: r.answer_key }])
+    );
+
+    for (const [qid, resp] of Object.entries(body.data.answers)) {
+      if (!validIds.has(qid)) return reply.status(400).send({ error: `Invalid question ID: ${qid}` });
+      const meta = qmeta.get(qid);
+      if (!meta) return reply.status(400).send({ error: `Unknown question ID: ${qid}` });
+      if (!responseSchemaFor(meta.type).safeParse(resp).success) {
+        return reply.status(400).send({ error: `Malformed answer for question ${qid}` });
       }
     }
 
@@ -145,7 +187,7 @@ export async function candidateRoutes(app: FastifyInstance) {
       for (const [questionId, answer] of Object.entries(body.data.answers)) {
         await sql`
           INSERT INTO candidate_answers (link_id, question_id, answer)
-          VALUES (${link.id}, ${questionId}, ${answer})
+          VALUES (${link.id}, ${questionId}, ${sql.json(answer as any)})
           ON CONFLICT (link_id, question_id)
           DO UPDATE SET answer = EXCLUDED.answer, submitted_at = NOW()
         `;
@@ -165,35 +207,31 @@ export async function candidateRoutes(app: FastifyInstance) {
 
       submittedAt = updated.submitted_at;
 
-      // Fetch all answers with correct options for grading
       const rows = await sql`
-        SELECT
-          ca.question_id,
-          ca.answer          AS candidate_answer,
-          q.correct_option,
-          q.skill_area
+        SELECT ca.question_id, ca.answer AS response, q.type, q.answer_key, q.skill_area
         FROM candidate_answers ca
         JOIN questions q ON q.id = ca.question_id
         WHERE ca.link_id = ${link.id}
       `;
 
-      const totalQuestions = rows.length;
-      const correctCount = (rows as unknown as Array<{ candidate_answer: string; correct_option: string }>).filter((r) => r.candidate_answer === r.correct_option).length;
+      const graded = (rows as unknown as Array<{ response: any; type: QuestionType; answer_key: any; skill_area: string }>)
+        .map((r) => ({ skill_area: r.skill_area, correct: gradeAnswer(r.type, r.answer_key, r.response) }));
+
+      const totalQuestions = graded.length;
+      const correctCount = graded.filter((g) => g.correct).length;
       scorePct = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
       pass = scorePct >= link.pass_threshold_pct;
 
-      // Compute skill area breakdown
       const skillMap = new Map<string, { correct: number; total: number }>();
-      for (const r of rows as unknown as Array<{ candidate_answer: string; correct_option: string; skill_area: string }>) {
-        const entry = skillMap.get(r.skill_area) ?? { correct: 0, total: 0 };
+      for (const g of graded) {
+        const entry = skillMap.get(g.skill_area) ?? { correct: 0, total: 0 };
         entry.total += 1;
-        if (r.candidate_answer === r.correct_option) entry.correct += 1;
-        skillMap.set(r.skill_area, entry);
+        if (g.correct) entry.correct += 1;
+        skillMap.set(g.skill_area, entry);
       }
       const skillAreaScores = Object.fromEntries(
         [...skillMap.entries()].map(([skill_area, { correct, total }]) => [
-          skill_area,
-          { correct, total, pct: Math.round((correct / total) * 100) },
+          skill_area, { correct, total, pct: Math.round((correct / total) * 100) },
         ])
       );
 
@@ -251,20 +289,19 @@ export async function candidateRoutes(app: FastifyInstance) {
 
     const answerSheet = await db`
       SELECT
-        q.text             AS question_text,
-        q.option_a,
-        q.option_b,
-        q.option_c,
-        q.option_d,
-        q.correct_option,
-        q.skill_area,
-        ca.answer          AS candidate_answer,
-        (ca.answer = q.correct_option) AS is_correct
+        q.type,
+        q.content,
+        q.answer_key,
+        ca.answer AS response,
+        q.skill_area
       FROM candidate_answers ca
       JOIN questions q ON q.id = ca.question_id
       WHERE ca.link_id = ${link.id}
       ORDER BY q.skill_area, q.id
     `;
+
+    const sheet = (answerSheet as unknown as Array<{ type: QuestionType; content: any; answer_key: any; response: any; skill_area: string }>)
+      .map((r) => ({ ...r, is_correct: gradeAnswer(r.type, r.answer_key, r.response) }));
 
     return reply.status(200).send({
       link_id: link.id,
@@ -279,7 +316,7 @@ export async function candidateRoutes(app: FastifyInstance) {
       technology_name: result.technology_name,
       difficulty: result.difficulty,
       skill_area_scores: result.skill_area_scores,
-      answer_sheet: answerSheet,
+      answer_sheet: sheet,
     });
   });
 }
