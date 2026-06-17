@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import type { ColumnDef } from '@tanstack/react-table';
-import { DataTable } from '@/components/ui/DataTable';
 import { api } from '@/lib/api';
-import type { AdminSubmissionResult, AdminAnswerSheetRow } from '@dev-assessment/shared';
+import type { AdminSubmissionResult } from '@dev-assessment/shared';
+import { AnswerSheetItem } from '@/components/question/AnswerSheetItem';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 
@@ -15,87 +14,6 @@ function formatTime(seconds: number): string {
   return `${m}m ${s.toString().padStart(2, '0')}s`;
 }
 
-function getOptionText(
-  row: AdminAnswerSheetRow,
-  key: 'a' | 'b' | 'c' | 'd'
-): string {
-  const map = { a: row.option_a, b: row.option_b, c: row.option_c, d: row.option_d };
-  return map[key];
-}
-
-const answerSheetColumns: ColumnDef<AdminAnswerSheetRow>[] = [
-  {
-    header: '#',
-    id: 'index',
-    cell: ({ row }) => <span className="text-muted/70">{row.index + 1}</span>,
-  },
-  {
-    header: 'Question',
-    accessorKey: 'question_text',
-    cell: ({ getValue }) => (
-      <span className="text-sm text-foreground/80 max-w-xs block">{getValue<string>()}</span>
-    ),
-  },
-  {
-    header: 'Skill Area',
-    accessorKey: 'skill_area',
-    cell: ({ getValue }) => (
-      <span className="text-xs text-muted">{getValue<string>()}</span>
-    ),
-  },
-  {
-    header: 'Your Answer',
-    accessorKey: 'candidate_answer',
-    cell: ({ row }) => {
-      const ans = row.original.candidate_answer;
-      return ans ? (
-        <span className="text-sm text-foreground/80">
-          {ans.toUpperCase()}. {getOptionText(row.original, ans)}
-        </span>
-      ) : (
-        <span className="text-xs text-muted/70 italic">No answer</span>
-      );
-    },
-  },
-  {
-    header: 'Correct Answer',
-    accessorKey: 'correct_option',
-    cell: ({ row }) => {
-      const opt = row.original.correct_option;
-      return (
-        <span className="text-sm text-foreground/80">
-          {opt.toUpperCase()}. {getOptionText(row.original, opt)}
-        </span>
-      );
-    },
-  },
-  {
-    header: 'Result',
-    accessorKey: 'is_correct',
-    cell: ({ getValue }) =>
-      getValue<boolean>() ? (
-        <span className="text-green-600 font-bold">✓</span>
-      ) : (
-        <span className="text-red-500 font-bold">✗</span>
-      ),
-  },
-  {
-    header: 'Family ID',
-    accessorKey: 'family_id',
-    cell: ({ getValue }) => (
-      <span className="font-mono text-xs text-muted/70">
-        {getValue<string>().substring(0, 8)}…
-      </span>
-    ),
-  },
-  {
-    header: 'Ver',
-    accessorKey: 'version',
-    cell: ({ getValue }) => (
-      <span className="text-xs text-muted">v{getValue<number>()}</span>
-    ),
-  },
-];
 
 export default function SubmissionDetailPage() {
   const { linkId } = useParams<{ linkId: string }>();
@@ -257,7 +175,9 @@ export default function SubmissionDetailPage() {
       {/* Answer Sheet */}
       <div className="bg-card rounded-lg border border-border p-6">
         <h2 className="text-base font-semibold text-foreground mb-4">Answer Sheet</h2>
-        <DataTable columns={answerSheetColumns} data={result.answer_sheet} />
+        <div className="space-y-3">
+          {result.answer_sheet.map((row, i) => <AnswerSheetItem key={i} row={row} />)}
+        </div>
       </div>
 
       <ConfirmDialog
