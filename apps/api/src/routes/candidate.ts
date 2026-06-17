@@ -289,20 +289,19 @@ export async function candidateRoutes(app: FastifyInstance) {
 
     const answerSheet = await db`
       SELECT
-        q.text             AS question_text,
-        q.option_a,
-        q.option_b,
-        q.option_c,
-        q.option_d,
-        q.correct_option,
-        q.skill_area,
-        ca.answer          AS candidate_answer,
-        (ca.answer = q.correct_option) AS is_correct
+        q.type,
+        q.content,
+        q.answer_key,
+        ca.answer AS response,
+        q.skill_area
       FROM candidate_answers ca
       JOIN questions q ON q.id = ca.question_id
       WHERE ca.link_id = ${link.id}
       ORDER BY q.skill_area, q.id
     `;
+
+    const sheet = (answerSheet as unknown as Array<{ type: QuestionType; content: any; answer_key: any; response: any; skill_area: string }>)
+      .map((r) => ({ ...r, is_correct: gradeAnswer(r.type, r.answer_key, r.response) }));
 
     return reply.status(200).send({
       link_id: link.id,
@@ -317,7 +316,7 @@ export async function candidateRoutes(app: FastifyInstance) {
       technology_name: result.technology_name,
       difficulty: result.difficulty,
       skill_area_scores: result.skill_area_scores,
-      answer_sheet: answerSheet,
+      answer_sheet: sheet,
     });
   });
 }
