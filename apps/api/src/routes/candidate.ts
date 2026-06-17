@@ -29,7 +29,7 @@ function toCandidateContent(type: QuestionType, content: any, seed: string, qid:
 }
 
 const submitSchema = z.object({
-  answers: z.record(z.string().uuid(), z.enum(['a', 'b', 'c', 'd'])),
+  answers: z.record(z.string().uuid(), z.unknown()),
 });
 
 export async function candidateRoutes(app: FastifyInstance) {
@@ -158,9 +158,22 @@ export async function candidateRoutes(app: FastifyInstance) {
       seededSample(pool as unknown as { id: string }[], link.num_questions, link.seed).map((q) => q.id)
     );
 
-    for (const qid of Object.keys(body.data.answers)) {
-      if (!validIds.has(qid)) {
-        return reply.status(400).send({ error: `Invalid question ID: ${qid}` });
+    const typeRows = await db`
+      SELECT id, type, answer_key
+      FROM questions
+      WHERE id = ANY(${Object.keys(body.data.answers)}::uuid[])
+    `;
+    const qmeta = new Map<string, { type: QuestionType; answer_key: any }>(
+      (typeRows as unknown as Array<{ id: string; type: QuestionType; answer_key: any }>)
+        .map((r) => [r.id, { type: r.type, answer_key: r.answer_key }])
+    );
+
+    for (const [qid, resp] of Object.entries(body.data.answers)) {
+      if (!validIds.has(qid)) return reply.status(400).send({ error: `Invalid question ID: ${qid}` });
+      const meta = qmeta.get(qid);
+      if (!meta) return reply.status(400).send({ error: `Unknown question ID: ${qid}` });
+      if (!responseSchemaFor(meta.type).safeParse(resp).success) {
+        return reply.status(400).send({ error: `Malformed answer for question ${qid}` });
       }
     }
 
@@ -174,7 +187,7 @@ export async function candidateRoutes(app: FastifyInstance) {
       for (const [questionId, answer] of Object.entries(body.data.answers)) {
         await sql`
           INSERT INTO candidate_answers (link_id, question_id, answer)
-          VALUES (${link.id}, ${questionId}, ${answer})
+          VALUES (${link.id}, ${questionId}, ${sql.json(answer as any)})
           ON CONFLICT (link_id, question_id)
           DO UPDATE SET answer = EXCLUDED.answer, submitted_at = NOW()
         `;
@@ -194,35 +207,31 @@ export async function candidateRoutes(app: FastifyInstance) {
 
       submittedAt = updated.submitted_at;
 
-      // Fetch all answers with correct options for grading
       const rows = await sql`
-        SELECT
-          ca.question_id,
-          ca.answer          AS candidate_answer,
-          q.correct_option,
-          q.skill_area
+        SELECT ca.question_id, ca.answer AS response, q.type, q.answer_key, q.skill_area
         FROM candidate_answers ca
         JOIN questions q ON q.id = ca.question_id
         WHERE ca.link_id = ${link.id}
       `;
 
-      const totalQuestions = rows.length;
-      const correctCount = (rows as unknown as Array<{ candidate_answer: string; correct_option: string }>).filter((r) => r.candidate_answer === r.correct_option).length;
+      const graded = (rows as unknown as Array<{ response: any; type: QuestionType; answer_key: any; skill_area: string }>)
+        .map((r) => ({ skill_area: r.skill_area, correct: gradeAnswer(r.type, r.answer_key, r.response) }));
+
+      const totalQuestions = graded.length;
+      const correctCount = graded.filter((g) => g.correct).length;
       scorePct = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
       pass = scorePct >= link.pass_threshold_pct;
 
-      // Compute skill area breakdown
       const skillMap = new Map<string, { correct: number; total: number }>();
-      for (const r of rows as unknown as Array<{ candidate_answer: string; correct_option: string; skill_area: string }>) {
-        const entry = skillMap.get(r.skill_area) ?? { correct: 0, total: 0 };
+      for (const g of graded) {
+        const entry = skillMap.get(g.skill_area) ?? { correct: 0, total: 0 };
         entry.total += 1;
-        if (r.candidate_answer === r.correct_option) entry.correct += 1;
-        skillMap.set(r.skill_area, entry);
+        if (g.correct) entry.correct += 1;
+        skillMap.set(g.skill_area, entry);
       }
       const skillAreaScores = Object.fromEntries(
         [...skillMap.entries()].map(([skill_area, { correct, total }]) => [
-          skill_area,
-          { correct, total, pct: Math.round((correct / total) * 100) },
+          skill_area, { correct, total, pct: Math.round((correct / total) * 100) },
         ])
       );
 
