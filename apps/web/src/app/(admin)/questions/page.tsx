@@ -435,13 +435,13 @@ export default function QuestionsPage() {
         </div>
       )}
 
-      <p className="text-sm text-muted mb-2">
+      <div className="text-sm text-muted mb-2">
         {loading ? (
           <Skeleton className="h-4 w-32 inline-block" />
         ) : (
           `${total} question${total !== 1 ? 's' : ''} total`
         )}
-      </p>
+      </div>
 
       <DataTable
         columns={columns}
