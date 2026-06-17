@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deriveSeed, seededSample } from './rng.js';
+import { deriveSeed, seededSample, seededShuffle } from './rng.js';
 
 describe('deriveSeed', () => {
   it('is deterministic — same inputs, same output', () => {
@@ -54,5 +54,29 @@ describe('seededSample', () => {
     const original = [...pool];
     seededSample(pool, 5, 'seed-mut');
     expect(pool).toEqual(original);
+  });
+});
+
+describe('seededShuffle', () => {
+  const arr = [0, 1, 2, 3, 4, 5];
+
+  it('is deterministic — same seed, same order', () => {
+    expect(seededShuffle(arr, 's1')).toEqual(seededShuffle(arr, 's1'));
+  });
+
+  it('differs for different seeds (statistically)', () => {
+    expect(seededShuffle(arr, 's1')).not.toEqual(seededShuffle(arr, 's2'));
+  });
+
+  it('is a permutation — same multiset, same length', () => {
+    const out = seededShuffle(arr, 's3');
+    expect(out).toHaveLength(arr.length);
+    expect([...out].sort((a, b) => a - b)).toEqual(arr);
+  });
+
+  it('does not mutate the input', () => {
+    const original = [...arr];
+    seededShuffle(arr, 's4');
+    expect(arr).toEqual(original);
   });
 });
