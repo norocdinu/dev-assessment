@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { ColumnDef, Row } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/DataTable';
 import { api } from '@/lib/api';
-import type { Question, Technology } from '@dev-assessment/shared';
+import type { Question, Technology, Block } from '@dev-assessment/shared';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -17,6 +17,9 @@ import { ExportScopeDialog, type ExportScope } from '@/components/admin/ExportSc
 interface QuestionRow extends Question {
   technology_name: string;
 }
+
+const promptPreview = (content: Question['content']) =>
+  (content?.prompt as Block[] | undefined)?.find((b) => b.type === 'text')?.text ?? '(no text)';
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -258,10 +261,17 @@ export default function QuestionsPage() {
     { header: 'Difficulty', accessorKey: 'difficulty', cell: ({ getValue }) => <span className="capitalize">{getValue<string>()}</span> },
     { header: 'Skill Area', accessorKey: 'skill_area' },
     {
+      id: 'type',
+      header: 'Type',
+      cell: ({ row }: { row: Row<QuestionRow> }) => (
+        <span className="capitalize">{row.original.type.replace(/_/g, ' ')}</span>
+      ),
+    },
+    {
+      id: 'question',
       header: 'Question',
-      accessorKey: 'text',
-      cell: ({ getValue }) => {
-        const t = getValue<string>();
+      cell: ({ row }: { row: Row<QuestionRow> }) => {
+        const t = promptPreview(row.original.content);
         return t.length > 80 ? t.slice(0, 80) + '…' : t;
       },
     },
@@ -523,7 +533,7 @@ export default function QuestionsPage() {
               {historyModal.map((q) => (
                 <div key={q.id} className="border border-border rounded p-3 text-sm">
                   <div className="font-medium">v{q.version} {q.is_latest ? '(current)' : ''}</div>
-                  <div className="text-foreground/70 mt-1">{q.text}</div>
+                  <div className="text-foreground/70 mt-1">{promptPreview(q.content)}</div>
                   <div className="text-xs text-muted/70 mt-1">{new Date(q.created_at).toLocaleString()}</div>
                 </div>
               ))}
