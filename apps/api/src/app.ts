@@ -16,6 +16,7 @@ import { submissionRoutes } from './routes/submissions.js';
 import { statsRoutes } from './routes/stats.js';
 import { accountRoutes } from './routes/accounts.js';
 import { dashboardRoutes } from './routes/dashboard.js';
+import { assetRoutes } from './routes/assets.js';
 
 /**
  * Builds and configures the Fastify instance without starting it. Keeping
@@ -57,6 +58,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   // Candidate endpoints are public and called from the web origin, which the
   // CORS allow-list already covers — no bespoke per-route CORS handling needed.
   await app.register(candidateRoutes, { prefix: '/candidate' });
+
+  await app.register(assetRoutes, { prefix: '/assets' });
 
   registerErrorHandler(app);
 
