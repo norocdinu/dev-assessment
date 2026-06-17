@@ -136,6 +136,20 @@ Deployed via the root **`render.yaml`** Blueprint — managed PostgreSQL plus Do
 
 ## Changelog
 
+### v1.5 — Multi-Type Questions ✓ (2026-06-17)
+
+The question bank expanded from single-choice (a/b/c/d) to six deterministic, instantly-auto-graded question types, each able to embed rich text, code snippets, and images.
+
+#### Question types
+
+- **Six types**: single choice, multiple select, true / false, matching (relate two columns), ordering (drag-to-arrange), and fill-in-the-blank (`___` markers with per-blank accepted answers)
+- **Rich stimulus** on every type — compose the prompt from text, syntax-highlighted **code** blocks, and uploaded **images**
+- **Unified model** (migration `0005`): a `type` discriminator plus JSONB `content` (prompt + type-specific fields) and `answer_key`; existing single-choice questions migrated in place and the legacy `option_*`/`correct_option` columns retired
+- **All-or-nothing grading** via a pure, unit-tested `gradeAnswer` — a question scores only if fully correct, so the `correct / total` score math is unchanged
+- **Anti-leak shuffling**: matching/ordering options are shuffled deterministically (per-link seed) at render so the stored correct order never reaches the candidate; answers are submitted in canonical index space
+- **Image assets** stored as `BYTEA` in Postgres (`question_assets`), uploaded via `POST /assets` (owner-only, ≤1 MB) and served by `GET /assets/:id`
+- Authoring UI with a type picker + per-type editors and a shared stimulus builder; candidate test UI and answer sheets render per type. CSV import/export remain single-choice-only.
+
 ### v1.4 — Technology Management & Question-Bank Controls ✓ (2026-06-16)
 
 Owners can now curate the technology list directly, and the question bank gained per-page and export controls.
