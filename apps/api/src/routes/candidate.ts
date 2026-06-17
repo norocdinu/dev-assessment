@@ -2,9 +2,31 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { db } from '../db/client.js';
 import { env } from '../config/env.js';
-import { seededSample } from '../lib/rng.js';
+import { seededSample, seededShuffle } from '../lib/rng.js';
+import { gradeAnswer } from '../lib/grade-answer.js';
+import { responseSchemaFor } from '../lib/question-schema.js';
+import type { QuestionType } from '@dev-assessment/shared';
 
 const DURATION_MS = env.TEST_DURATION_MINUTES * 60 * 1000;
+
+/**
+ * Produce candidate-safe content: drop the answer_key, and for matching/ordering
+ * shuffle the order-bearing arrays deterministically (per link seed + question id)
+ * so the stored correct order is never revealed. Indices in ShuffledItem.idx are
+ * the ORIGINAL indices the candidate submits back.
+ */
+function toCandidateContent(type: QuestionType, content: any, seed: string, qid: string) {
+  if (type === 'matching') {
+    const right = content.right.map((text: string, idx: number) => ({ idx, text }));
+    return { prompt: content.prompt, left: content.left, right: seededShuffle(right, `${seed}:${qid}`) };
+  }
+  if (type === 'ordering') {
+    const items = content.items.map((text: string, idx: number) => ({ idx, text }));
+    return { prompt: content.prompt, items: seededShuffle(items, `${seed}:${qid}`) };
+  }
+  // single_choice / multi_select keep options as-is; true_false / fill_blank just prompt
+  return content;
+}
 
 const submitSchema = z.object({
   answers: z.record(z.string().uuid(), z.enum(['a', 'b', 'c', 'd'])),
@@ -44,7 +66,7 @@ export async function candidateRoutes(app: FastifyInstance) {
 
     // Fetch question pool — ORDER BY id is required for deterministic seededSample
     const pool = await db`
-      SELECT id, text, option_a, option_b, option_c, option_d, skill_area
+      SELECT id, type, content, skill_area
       FROM questions
       WHERE technology_id = ${link.technology_id}
         AND difficulty = ${link.difficulty}
@@ -58,6 +80,13 @@ export async function candidateRoutes(app: FastifyInstance) {
     }
 
     const questions = seededSample(pool, link.num_questions, link.seed);
+    const safeQuestions = (questions as unknown as Array<{ id: string; type: QuestionType; content: any; skill_area: string }>)
+      .map((q) => ({
+        id: q.id,
+        type: q.type,
+        skill_area: q.skill_area,
+        content: toCandidateContent(q.type, q.content, link.seed, q.id),
+      }));
     const serverNow = new Date().toISOString();
 
     if (link.state === 'created') {
@@ -66,7 +95,7 @@ export async function candidateRoutes(app: FastifyInstance) {
         SET state = 'active', started_at = ${serverNow}
         WHERE id = ${link.id} AND state = 'created'
       `;
-      return reply.status(200).send({ started_at: serverNow, server_now: serverNow, duration_ms: DURATION_MS, questions });
+      return reply.status(200).send({ started_at: serverNow, server_now: serverNow, duration_ms: DURATION_MS, questions: safeQuestions });
     }
 
     // state === 'active' — return existing started_at
@@ -74,7 +103,7 @@ export async function candidateRoutes(app: FastifyInstance) {
       started_at: link.started_at,
       server_now: serverNow,
       duration_ms: DURATION_MS,
-      questions,
+      questions: safeQuestions,
     });
   });
 
