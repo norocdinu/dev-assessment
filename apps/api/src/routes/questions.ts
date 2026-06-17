@@ -116,7 +116,9 @@ export async function questionRoutes(app: FastifyInstance) {
     const esc = (v: string | number | boolean | null | undefined) =>
       `"${String(v ?? '').replace(/"/g, '""')}"`;
 
-    const headers = ['Technology', 'Difficulty', 'Skill Area', 'Type', 'Question Text', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Option', 'Explanation'];
+    // Export covers single_choice questions only, and uses the exact column
+    // order the import endpoint expects — so an exported file re-imports cleanly.
+    const headers = ['Technology', 'Difficulty', 'Skill Area', 'Question Text', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Option', 'Explanation'];
     const firstText = (content: any) =>
       (content?.prompt ?? []).find((b: any) => b.type === 'text')?.text ?? '';
     const dataRows = (rows as unknown as Array<{
@@ -128,7 +130,7 @@ export async function questionRoutes(app: FastifyInstance) {
         const opts = q.content?.options ?? [];
         const ci = q.answer_key?.correctIndex ?? 0;
         return [
-          esc(q.tech_slug), esc(q.difficulty), esc(q.skill_area), esc('single_choice'),
+          esc(q.tech_slug), esc(q.difficulty), esc(q.skill_area),
           esc(firstText(q.content)),
           esc(opts[0] ?? ''), esc(opts[1] ?? ''), esc(opts[2] ?? ''), esc(opts[3] ?? ''),
           esc(['a', 'b', 'c', 'd'][ci] ?? 'a'),
