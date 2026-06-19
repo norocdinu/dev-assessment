@@ -6,6 +6,7 @@ import { authMiddleware, getAuthUser } from '../middleware/auth.js';
 import { requireRole } from '../middleware/rbac.js';
 import { logAudit } from '../lib/audit.js';
 import { pageSizeSchema, parseExportIds } from '../lib/question-query.js';
+import { mapImportHeaders, fieldValue } from '../lib/question-import.js';
 import { validateQuestionContent } from '../lib/question-schema.js';
 import type { QuestionType } from '@dev-assessment/shared';
 
@@ -116,6 +117,9 @@ export async function questionRoutes(app: FastifyInstance) {
     const esc = (v: string | number | boolean | null | undefined) =>
       `"${String(v ?? '').replace(/"/g, '""')}"`;
 
+    // Export covers single_choice questions only. The import endpoint maps
+    // columns by header name (see question-import.ts), so the human-readable
+    // "Type" column is informative and round-trips cleanly back through import.
     const headers = ['Technology', 'Difficulty', 'Skill Area', 'Type', 'Question Text', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Option', 'Explanation'];
     const firstText = (content: any) =>
       (content?.prompt ?? []).find((b: any) => b.type === 'text')?.text ?? '';
@@ -128,7 +132,7 @@ export async function questionRoutes(app: FastifyInstance) {
         const opts = q.content?.options ?? [];
         const ci = q.answer_key?.correctIndex ?? 0;
         return [
-          esc(q.tech_slug), esc(q.difficulty), esc(q.skill_area), esc('single_choice'),
+          esc(q.tech_slug), esc(q.difficulty), esc(q.skill_area), esc(q.type),
           esc(firstText(q.content)),
           esc(opts[0] ?? ''), esc(opts[1] ?? ''), esc(opts[2] ?? ''), esc(opts[3] ?? ''),
           esc(['a', 'b', 'c', 'd'][ci] ?? 'a'),
@@ -358,6 +362,16 @@ export async function questionRoutes(app: FastifyInstance) {
     const allRows = parseCsvText(text);
     if (allRows.length < 2) return reply.status(400).send({ error: 'CSV must have a header row and at least one data row' });
 
+    // Map columns by header name so the importer accepts the exact format the
+    // export produces (Title Case, with a Type column) as well as the legacy
+    // snake_case headers — and tolerates reordered/extra columns.
+    const { index: headerIndex, missing } = mapImportHeaders(allRows[0]);
+    if (missing.length > 0) {
+      return reply.status(400).send({
+        error: `CSV is missing required column${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}`,
+      });
+    }
+
     // Load all technologies for slug → id lookup
     const technologies = await db`SELECT id, slug FROM technologies`;
     const techMap = new Map<string, string>(
@@ -384,13 +398,18 @@ export async function questionRoutes(app: FastifyInstance) {
     for (let i = 1; i < allRows.length; i++) {
       const rowNum = i + 1; // 1-indexed, header is row 1
       const cols = allRows[i];
-      // Expected: technology_slug,difficulty,skill_area,text,option_a,option_b,option_c,option_d,correct_option,explanation
-      if (cols.length < 9) {
-        errors.push({ row: rowNum, reason: `Expected at least 9 columns, got ${cols.length}` });
-        continue;
-      }
 
-      const [techSlug, difficulty, skill_area, text, option_a, option_b, option_c, option_d, correct_option, explanation] = cols;
+      const techSlug = fieldValue(cols, headerIndex, 'technology');
+      const difficulty = fieldValue(cols, headerIndex, 'difficulty');
+      const skill_area = fieldValue(cols, headerIndex, 'skill_area');
+      const text = fieldValue(cols, headerIndex, 'text');
+      const option_a = fieldValue(cols, headerIndex, 'option_a');
+      const option_b = fieldValue(cols, headerIndex, 'option_b');
+      const option_c = fieldValue(cols, headerIndex, 'option_c');
+      const option_d = fieldValue(cols, headerIndex, 'option_d');
+      const correct_option = fieldValue(cols, headerIndex, 'correct_option');
+      const explanation = fieldValue(cols, headerIndex, 'explanation');
+
       const technology_id = techMap.get(techSlug);
       if (!technology_id) {
         errors.push({ row: rowNum, reason: `Unknown technology slug: '${techSlug}'` });
